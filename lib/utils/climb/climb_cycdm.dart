@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/anime_filter.dart';
-import 'package:animetrace/models/enum/play_status.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/anime_filter.dart';
+import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/log.dart';
 
 // 次元城动漫
 class ClimbCycdm with Climb {

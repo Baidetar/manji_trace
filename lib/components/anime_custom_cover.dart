@@ -1,8 +1,8 @@
-import 'package:animetrace/animation/fade_animated_switcher.dart';
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/animation/fade_animated_switcher.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_list_cover.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/components/percent_bar.dart';
-import 'package:animetrace/models/data_state.dart';
-import 'package:animetrace/widgets/progress.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/pages/network/sources/pages/lapse_cover_fix/lapse_cover_controller.dart';
-import 'package:animetrace/widgets/button/action_button.dart';
+import 'package:manji_trace/components/anime_list_cover.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/components/percent_bar.dart';
+import 'package:manji_trace/models/data_state.dart';
+import 'package:manji_trace/widgets/progress.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/pages/network/sources/pages/lapse_cover_fix/lapse_cover_controller.dart';
+import 'package:manji_trace/widgets/button/action_button.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 
 /// 展示网络封面失效的所有动漫
 class LapseCoverAnimesPage extends StatefulWidget {

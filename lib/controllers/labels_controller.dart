@@ -1,10 +1,10 @@
-import 'package:animetrace/controllers/setting_service.dart';
-import 'package:animetrace/modules/sortable/sortable.dart';
-import 'package:animetrace/utils/extensions/list.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
+import 'package:manji_trace/modules/sortable/sortable.dart';
+import 'package:manji_trace/utils/extensions/list.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/dao/label_dao.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/dao/label_dao.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:get/get.dart';
 import 'package:pinyin/pinyin.dart';
 

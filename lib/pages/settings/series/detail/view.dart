@@ -1,8 +1,8 @@
-import 'package:animetrace/components/anime_custom_cover.dart';
-import 'package:animetrace/components/anime_grid_view.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
+import 'package:manji_trace/components/anime_grid_view.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_list_tile.dart';
-import 'package:animetrace/widgets/setting_title.dart';
+import 'package:manji_trace/components/anime_list_tile.dart';
+import 'package:manji_trace/widgets/setting_title.dart';
 
 import '../../../../controllers/anime_display_controller.dart';
 import '../../../../dao/anime_dao.dart';

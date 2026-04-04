@@ -1,12 +1,12 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/dao/history_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/data_state.dart';
-import 'package:animetrace/models/review_info.dart';
-import 'package:animetrace/utils/time_util.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/dao/history_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/data_state.dart';
+import 'package:manji_trace/models/review_info.dart';
+import 'package:manji_trace/utils/time_util.dart';
 
 class AnimeReviewInfoView extends StatefulWidget {
   const AnimeReviewInfoView(

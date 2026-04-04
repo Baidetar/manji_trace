@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/pages/settings/series/manage/logic.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/pages/settings/series/manage/logic.dart';
+import 'package:manji_trace/utils/log.dart';
 
 import '../../../../../widgets/setting_title.dart';
 import '../style.dart';

@@ -1,19 +1,19 @@
 import 'dart:ui';
 
-import 'package:animetrace/controllers/anime_service.dart';
-import 'package:animetrace/pages/local_search/views/local_search_page.dart';
+import 'package:manji_trace/controllers/anime_service.dart';
+import 'package:manji_trace/pages/local_search/views/local_search_page.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/pages/anime_detail/controllers/anime_controller.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/anime_detail/pages/anime_cover_detail.dart';
-import 'package:animetrace/pages/anime_detail/pages/ui_setting.dart';
-import 'package:animetrace/pages/network/climb/anime_climb_all_website.dart';
-import 'package:animetrace/pages/settings/image_wall/note_image_wall.dart';
-import 'package:animetrace/utils/extensions/color.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/widgets/bottom_sheet.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/pages/anime_detail/controllers/anime_controller.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/anime_detail/pages/anime_cover_detail.dart';
+import 'package:manji_trace/pages/anime_detail/pages/ui_setting.dart';
+import 'package:manji_trace/pages/network/climb/anime_climb_all_website.dart';
+import 'package:manji_trace/pages/settings/image_wall/note_image_wall.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/widgets/bottom_sheet.dart';
 import 'package:get/get.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 

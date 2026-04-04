@@ -1,4 +1,4 @@
-import 'package:animetrace/models/week_record.dart';
+import 'package:manji_trace/models/week_record.dart';
 import 'package:flutter/material.dart';
 
 class WeeklyController extends ChangeNotifier {

@@ -1,19 +1,19 @@
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/models/anime_filter.dart';
-import 'package:animetrace/utils/climb/climb_agemys.dart';
-import 'package:animetrace/utils/climb/climb_aimii.dart';
-import 'package:animetrace/utils/climb/climb_bangumi.dart';
-import 'package:animetrace/utils/climb/climb_cycdm.dart';
-import 'package:animetrace/utils/climb/climb_douban.dart';
-import 'package:animetrace/utils/climb/climb_girigirilove.dart';
-import 'package:animetrace/utils/climb/climb_gugu.dart';
-import 'package:animetrace/utils/climb/climb_nayfun.dart';
-import 'package:animetrace/utils/climb/climb_omofun.dart';
-import 'package:animetrace/utils/climb/climb_qdm.dart';
-import 'package:animetrace/utils/climb/climb_quqi.dart';
-import 'package:animetrace/utils/climb/climb_xifan.dart';
-import 'package:animetrace/utils/climb/climb_yhdm.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/models/anime_filter.dart';
+import 'package:manji_trace/utils/climb/climb_agemys.dart';
+import 'package:manji_trace/utils/climb/climb_aimii.dart';
+import 'package:manji_trace/utils/climb/climb_bangumi.dart';
+import 'package:manji_trace/utils/climb/climb_cycdm.dart';
+import 'package:manji_trace/utils/climb/climb_douban.dart';
+import 'package:manji_trace/utils/climb/climb_girigirilove.dart';
+import 'package:manji_trace/utils/climb/climb_gugu.dart';
+import 'package:manji_trace/utils/climb/climb_nayfun.dart';
+import 'package:manji_trace/utils/climb/climb_omofun.dart';
+import 'package:manji_trace/utils/climb/climb_qdm.dart';
+import 'package:manji_trace/utils/climb/climb_quqi.dart';
+import 'package:manji_trace/utils/climb/climb_xifan.dart';
+import 'package:manji_trace/utils/climb/climb_yhdm.dart';
 
 List<Anime> directory = []; // 目录动漫
 AnimeFilter filter = AnimeFilter(); // 目录页中的过滤条件

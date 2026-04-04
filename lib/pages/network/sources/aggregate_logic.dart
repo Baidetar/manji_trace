@@ -1,9 +1,9 @@
-import 'package:animetrace/controllers/update_record_controller.dart';
-import 'package:animetrace/dao/history_dao.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/global_data.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/controllers/update_record_controller.dart';
+import 'package:manji_trace/dao/history_dao.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/global_data.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:get/get.dart';
 
 import '../../../dao/anime_dao.dart';

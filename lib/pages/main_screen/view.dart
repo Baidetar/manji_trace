@@ -1,15 +1,15 @@
-import 'package:animetrace/utils/event.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/widgets/animation/fade_in_up.dart';
+import 'package:manji_trace/utils/event.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/widgets/animation/fade_in_up.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/backup_service.dart';
-import 'package:animetrace/controllers/theme_controller.dart';
-import 'package:animetrace/global.dart';
-import 'package:animetrace/pages/main_screen/logic.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/values/assets.gen.dart';
+import 'package:manji_trace/controllers/backup_service.dart';
+import 'package:manji_trace/controllers/theme_controller.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/pages/main_screen/logic.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/values/assets.gen.dart';
 import 'package:get/get.dart';
 
 class MainScreen extends StatefulWidget {

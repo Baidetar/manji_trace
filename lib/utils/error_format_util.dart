@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class ErrorFormatUtil {
   static String formatError(e) {

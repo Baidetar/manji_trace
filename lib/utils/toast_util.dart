@@ -1,8 +1,8 @@
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/loading_dialog.dart';
-import 'package:animetrace/controllers/theme_controller.dart';
+import 'package:manji_trace/components/loading_dialog.dart';
+import 'package:manji_trace/controllers/theme_controller.dart';
 import 'package:get/get.dart';
 
 class ToastUtil {

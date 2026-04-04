@@ -1,15 +1,15 @@
 import 'dart:io';
 
-import 'package:animetrace/utils/event.dart';
+import 'package:manji_trace/utils/event.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/backup_service.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/params/anime_sort_cond.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/controllers/backup_service.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/params/anime_sort_cond.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 

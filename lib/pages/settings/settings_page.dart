@@ -1,22 +1,22 @@
-import 'package:animetrace/widgets/rotated_logo.dart';
+import 'package:manji_trace/widgets/rotated_logo.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:animetrace/components/common_image.dart';
+import 'package:manji_trace/components/common_image.dart';
 
-import 'package:animetrace/global.dart';
-import 'package:animetrace/pages/settings/about_version.dart';
-import 'package:animetrace/pages/settings/backup_restore/home.dart';
-import 'package:animetrace/pages/settings/image_path_setting.dart';
-import 'package:animetrace/pages/settings/checklist_manage_page.dart';
-import 'package:animetrace/pages/settings/label/home.dart';
-import 'package:animetrace/pages/settings/series/manage/view.dart';
-import 'package:animetrace/pages/settings/theme_page.dart';
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/common_divider.dart';
-import 'package:animetrace/widgets/responsive.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/pages/settings/about_version.dart';
+import 'package:manji_trace/pages/settings/backup_restore/home.dart';
+import 'package:manji_trace/pages/settings/image_path_setting.dart';
+import 'package:manji_trace/pages/settings/checklist_manage_page.dart';
+import 'package:manji_trace/pages/settings/label/home.dart';
+import 'package:manji_trace/pages/settings/series/manage/view.dart';
+import 'package:manji_trace/pages/settings/theme_page.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/common_divider.dart';
+import 'package:manji_trace/widgets/responsive.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 import 'general_setting.dart';

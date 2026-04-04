@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import 'package:animetrace/components/website_logo.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/pages/network/sources/pages/source_detail_page.dart';
-import 'package:animetrace/pages/network/sources/widgets/ping_status.dart';
-import 'package:animetrace/utils/global_data.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/components/website_logo.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/pages/network/sources/pages/source_detail_page.dart';
+import 'package:manji_trace/pages/network/sources/widgets/ping_status.dart';
+import 'package:manji_trace/utils/global_data.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
 
 class SourceListPage extends StatefulWidget {
   const SourceListPage({super.key});

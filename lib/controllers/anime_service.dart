@@ -1,5 +1,5 @@
-import 'package:animetrace/controllers/update_record_controller.dart';
-import 'package:animetrace/dao/anime_dao.dart';
+import 'package:manji_trace/controllers/update_record_controller.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
 import 'package:get/get.dart';
 
 class AnimeService extends GetxService {

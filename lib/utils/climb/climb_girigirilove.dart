@@ -1,7 +1,7 @@
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/enum/play_status.dart';
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/utils/regexp.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/utils/regexp.dart';
 
 class ClimbGGLove with Climb {
   @override

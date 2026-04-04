@@ -1,8 +1,8 @@
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/models/anime_update_record.dart';
-import 'package:animetrace/models/vo/update_record_vo.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/models/anime_update_record.dart';
+import 'package:manji_trace/models/vo/update_record_vo.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class UpdateRecordDao {

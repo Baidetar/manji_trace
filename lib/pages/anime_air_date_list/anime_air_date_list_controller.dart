@@ -1,5 +1,5 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/anime.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/anime.dart';
 import 'package:get/get.dart';
 
 class AnimeAirDateListController extends GetxController {

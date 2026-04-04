@@ -1,9 +1,9 @@
-import 'package:animetrace/dao/journal_note_dao.dart';
-import 'package:animetrace/models/journal_note.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/pages/history/history_controller.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/dao/journal_note_dao.dart';
+import 'package:manji_trace/models/journal_note.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/pages/history/history_controller.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:get/get.dart';
 
 class JournalNoteController extends GetxController {

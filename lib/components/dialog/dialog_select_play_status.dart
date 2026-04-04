@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/enum/play_status.dart';
-import 'package:animetrace/pages/anime_detail/controllers/anime_controller.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/pages/anime_detail/controllers/anime_controller.dart';
 
 showDialogSelectPlayStatus(
     BuildContext context, AnimeController animeController) {

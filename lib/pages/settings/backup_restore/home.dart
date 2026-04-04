@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/pages/settings/backup_restore/local.dart';
-import 'package:animetrace/pages/settings/backup_restore/remote.dart';
-import 'package:animetrace/pages/settings/pages/rbr_page.dart';
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/backup_util.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
-import 'package:animetrace/widgets/setting_card.dart';
+import 'package:manji_trace/pages/settings/backup_restore/local.dart';
+import 'package:manji_trace/pages/settings/backup_restore/remote.dart';
+import 'package:manji_trace/pages/settings/pages/rbr_page.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/backup_util.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/widgets/setting_card.dart';
 
 class BackupAndRestorePage extends StatefulWidget {
   const BackupAndRestorePage({Key? key}) : super(key: key);

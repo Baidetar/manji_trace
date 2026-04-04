@@ -1,4 +1,4 @@
-import 'package:animetrace/models/migrate_config.dart';
+import 'package:manji_trace/models/migrate_config.dart';
 import 'package:flutter/material.dart';
 
 /// 迁移配置页

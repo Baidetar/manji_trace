@@ -1,7 +1,7 @@
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/anime_filter.dart';
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/utils/climb/climb_omofun.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/anime_filter.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/utils/climb/climb_omofun.dart';
 
 import '../../models/params/page_params.dart';
 

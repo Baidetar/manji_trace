@@ -1,9 +1,9 @@
-import 'package:animetrace/models/enum/note_type.dart';
-import 'package:animetrace/pages/note_list/widgets/rate_note_list_page.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
+import 'package:manji_trace/pages/note_list/widgets/rate_note_list_page.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/models/note_filter.dart';
-import 'package:animetrace/pages/note_list/widgets/episode_note_list_page.dart';
-import 'package:animetrace/widgets/responsive.dart';
+import 'package:manji_trace/models/note_filter.dart';
+import 'package:manji_trace/pages/note_list/widgets/episode_note_list_page.dart';
+import 'package:manji_trace/widgets/responsive.dart';
 
 class NoteSearchPage extends StatefulWidget {
   const NoteSearchPage({super.key});

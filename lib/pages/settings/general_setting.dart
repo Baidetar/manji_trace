@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/setting_service.dart';
-import 'package:animetrace/controllers/theme_controller.dart';
-import 'package:animetrace/models/page_switch_animation.dart';
-import 'package:animetrace/pages/settings/widgets/main_tab_layout_setting.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
-import 'package:animetrace/widgets/setting_card.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
+import 'package:manji_trace/controllers/theme_controller.dart';
+import 'package:manji_trace/models/page_switch_animation.dart';
+import 'package:manji_trace/pages/settings/widgets/main_tab_layout_setting.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/widgets/setting_card.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 
 class GeneralSettingPage extends StatefulWidget {
   const GeneralSettingPage({Key? key}) : super(key: key);

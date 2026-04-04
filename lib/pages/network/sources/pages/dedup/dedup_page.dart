@@ -1,11 +1,11 @@
-import 'package:animetrace/components/anime_custom_cover.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/animation/fade_animated_switcher.dart';
-import 'package:animetrace/components/operation_button.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/pages/network/sources/pages/dedup/dedup_controller.dart';
-import 'package:animetrace/utils/extensions/color.dart';
+import 'package:manji_trace/animation/fade_animated_switcher.dart';
+import 'package:manji_trace/components/operation_button.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/pages/network/sources/pages/dedup/dedup_controller.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
 import 'package:get/get.dart';
 
 /// 动漫去重页面

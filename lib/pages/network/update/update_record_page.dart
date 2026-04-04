@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/animation/fade_animated_switcher.dart';
-import 'package:animetrace/components/anime_list_cover.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/controllers/update_record_controller.dart';
-import 'package:animetrace/dao/update_record_dao.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/models/vo/update_record_vo.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/widgets/responsive.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/common_divider.dart';
-import 'package:animetrace/widgets/setting_title.dart';
+import 'package:manji_trace/animation/fade_animated_switcher.dart';
+import 'package:manji_trace/components/anime_list_cover.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/controllers/update_record_controller.dart';
+import 'package:manji_trace/dao/update_record_dao.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/models/vo/update_record_vo.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/widgets/responsive.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/common_divider.dart';
+import 'package:manji_trace/widgets/setting_title.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
 class UpdateRecordPage extends StatefulWidget {

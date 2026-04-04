@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/global.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/widgets/common_outlined_button.dart';
-import 'package:animetrace/widgets/stack_appbar.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/widgets/common_outlined_button.dart';
+import 'package:manji_trace/widgets/stack_appbar.dart';
 
 class VideoPlayerWithLoadUrlPage extends StatefulWidget {
   const VideoPlayerWithLoadUrlPage(

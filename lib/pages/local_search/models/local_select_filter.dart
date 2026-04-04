@@ -1,8 +1,8 @@
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/models/enum/anime_area.dart';
-import 'package:animetrace/models/enum/anime_category.dart';
-import 'package:animetrace/models/enum/play_status.dart';
-import 'package:animetrace/models/label.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/models/enum/anime_area.dart';
+import 'package:manji_trace/models/enum/anime_category.dart';
+import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/models/label.dart';
 
 class LocalSelectFilter {
   String? keyword;

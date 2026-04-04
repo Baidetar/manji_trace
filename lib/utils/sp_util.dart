@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class SPUtil {
   // 单例模式

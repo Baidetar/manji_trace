@@ -1,15 +1,15 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/note.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/utils/episode.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/episode.dart';
-import 'package:animetrace/models/note_filter.dart';
-import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/utils/escape_util.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/note.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/utils/episode.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/episode.dart';
+import 'package:manji_trace/models/note_filter.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/utils/escape_util.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class NoteDao {

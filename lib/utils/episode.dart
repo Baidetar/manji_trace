@@ -1,4 +1,4 @@
-import 'package:animetrace/models/anime.dart';
+import 'package:manji_trace/models/anime.dart';
 
 class EpisodeUtil {
   static int getFixedEpisodeNumber(Anime anime, int episodeNumber) {

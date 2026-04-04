@@ -1,7 +1,7 @@
-import 'package:animetrace/models/enum/play_status.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/utils/time_util.dart';
+import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/time_util.dart';
 
 class Anime {
   int animeId;

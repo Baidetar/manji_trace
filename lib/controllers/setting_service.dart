@@ -1,5 +1,5 @@
-import 'package:animetrace/dao/key_value_dao.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/dao/key_value_dao.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 import 'package:get/get.dart';
 
 /// 设置服务

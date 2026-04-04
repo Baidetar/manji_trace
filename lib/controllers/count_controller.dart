@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:get/get.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class CountController extends GetxController {
   RxInt count = 0.obs;

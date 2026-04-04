@@ -1,11 +1,11 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/bangumi/character_graph.dart';
-import 'package:animetrace/modules/load_status/controller.dart';
-import 'package:animetrace/repositories/bangumi_repository.dart';
-import 'package:animetrace/models/bangumi/bangumi.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/climb/climb_bangumi.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/bangumi/character_graph.dart';
+import 'package:manji_trace/modules/load_status/controller.dart';
+import 'package:manji_trace/repositories/bangumi_repository.dart';
+import 'package:manji_trace/models/bangumi/bangumi.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/climb/climb_bangumi.dart';
 import 'package:get/get.dart';
 
 class BangumiSubjectDetailLogic extends GetxController {

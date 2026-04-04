@@ -1,11 +1,11 @@
 import 'dart:math';
 
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/anime_filter.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/models/week_record.dart';
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/utils/climb/climb_yhdm.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/anime_filter.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/models/week_record.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/utils/climb/climb_yhdm.dart';
 import 'package:html/dom.dart';
 
 class ClimbAgemys with Climb {

@@ -1,6 +1,6 @@
-import 'package:animetrace/models/migrate_config.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/models/migrate_config.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 
 /// 收藏页开启下拉还原最新备份
 const pullDownRestoreLatestBackupInChecklistPage =

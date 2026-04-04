@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/dao/note_dao.dart';
-import 'package:animetrace/pages/modules/note_edit.dart';
-import 'package:animetrace/utils/common_util.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/components/anime_list_cover.dart';
-import 'package:animetrace/components/note/note_img_grid.dart';
-import 'package:animetrace/models/note.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/widgets/common_divider.dart';
+import 'package:manji_trace/dao/note_dao.dart';
+import 'package:manji_trace/pages/modules/note_edit.dart';
+import 'package:manji_trace/utils/common_util.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/components/anime_list_cover.dart';
+import 'package:manji_trace/components/note/note_img_grid.dart';
+import 'package:manji_trace/models/note.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/widgets/common_divider.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 /// 笔记卡片

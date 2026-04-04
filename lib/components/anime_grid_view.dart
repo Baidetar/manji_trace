@@ -1,8 +1,8 @@
-import 'package:animetrace/components/anime_custom_cover.dart';
-import 'package:animetrace/controllers/anime_display_controller.dart';
-import 'package:animetrace/utils/platform.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
+import 'package:manji_trace/controllers/anime_display_controller.dart';
+import 'package:manji_trace/utils/platform.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/models/anime.dart';
+import 'package:manji_trace/models/anime.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:get/get.dart';
 

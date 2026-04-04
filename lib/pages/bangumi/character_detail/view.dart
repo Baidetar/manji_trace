@@ -1,7 +1,7 @@
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/models/bangumi/bangumi.dart';
-import 'package:animetrace/utils/launch_uri_util.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/models/bangumi/bangumi.dart';
+import 'package:manji_trace/utils/launch_uri_util.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:flutter/material.dart';
 
 class CharacterDetailView extends StatefulWidget {

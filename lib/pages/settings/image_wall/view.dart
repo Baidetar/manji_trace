@@ -2,16 +2,16 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/global.dart';
-import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/pages/modules/note_img_viewer.dart';
-import 'package:animetrace/pages/settings/image_wall/style.dart';
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/extensions/color.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/pages/modules/note_img_viewer.dart';
+import 'package:manji_trace/pages/settings/image_wall/style.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/values/values.dart';
 
 class ImageWallPage extends StatefulWidget {
   const ImageWallPage({super.key, required this.imageUrls});

@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:animetrace/components/dialog/dialog_share_error_log.dart';
-import 'package:animetrace/utils/backup_util.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/utils/webdav_util.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/components/dialog/dialog_share_error_log.dart';
+import 'package:manji_trace/utils/backup_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/utils/webdav_util.dart';
+import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
 
 enum BackupMode {

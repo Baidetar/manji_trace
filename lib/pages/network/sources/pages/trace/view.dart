@@ -1,12 +1,12 @@
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/dao/history_dao.dart';
-import 'package:animetrace/dao/note_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/utils/time_util.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/dao/history_dao.dart';
+import 'package:manji_trace/dao/note_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/utils/time_util.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 /// 总览

@@ -31,11 +31,11 @@ if (flutterVersionName == null) {
 android {
     // TODO com.badworld.animetrace
     namespace 'com.example.flutter_test_future'
-    compileSdkVersion 35
+    compileSdkVersion 36
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     signingConfigs {
@@ -48,7 +48,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
 
     sourceSets {
@@ -59,7 +59,7 @@ android {
         // TODO com.badworld.animetrace
         applicationId "com.example.flutter_test_future"
         minSdkVersion flutter.minSdkVersion
-        targetSdkVersion 33
+        targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

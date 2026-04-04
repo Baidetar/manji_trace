@@ -1,13 +1,13 @@
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/app_upgrade_controller.dart';
-import 'package:animetrace/modules/load_status/status.dart';
-import 'package:animetrace/pages/changelog/view.dart';
-import 'package:animetrace/utils/launch_uri_util.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
-import 'package:animetrace/widgets/rotated_logo.dart';
-import 'package:animetrace/widgets/svg_asset_icon.dart';
+import 'package:manji_trace/controllers/app_upgrade_controller.dart';
+import 'package:manji_trace/modules/load_status/status.dart';
+import 'package:manji_trace/pages/changelog/view.dart';
+import 'package:manji_trace/utils/launch_uri_util.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/widgets/rotated_logo.dart';
+import 'package:manji_trace/widgets/svg_asset_icon.dart';
 import 'package:get/get.dart';
 
 class AboutVersion extends StatefulWidget {

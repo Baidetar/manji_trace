@@ -1,12 +1,12 @@
-import 'package:animetrace/controllers/setting_service.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/dao/episode_desc_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/episode.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/dao/episode_desc_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/episode.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:animetrace/utils/extensions/color.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 /// 动漫评分栏

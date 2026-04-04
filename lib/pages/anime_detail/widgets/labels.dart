@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/pages/anime_detail/controllers/anime_controller.dart';
-import 'package:animetrace/controllers/labels_controller.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/local_search/views/local_search_page.dart';
-import 'package:animetrace/pages/settings/label/home.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/bottom_sheet.dart';
+import 'package:manji_trace/pages/anime_detail/controllers/anime_controller.dart';
+import 'package:manji_trace/controllers/labels_controller.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/local_search/views/local_search_page.dart';
+import 'package:manji_trace/pages/settings/label/home.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/bottom_sheet.dart';
 import 'package:get/get.dart';
 
 class AnimeDetailLabels extends StatefulWidget {

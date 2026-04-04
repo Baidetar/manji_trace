@@ -1,4 +1,4 @@
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:dio/dio.dart';
 
 class DioLogInterceptor extends Interceptor {

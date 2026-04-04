@@ -1,5 +1,5 @@
-import 'package:animetrace/models/anime_history_record.dart';
-import 'package:animetrace/models/journal_note.dart';
+import 'package:manji_trace/models/anime_history_record.dart';
+import 'package:manji_trace/models/journal_note.dart';
 
 /// 统一的历史记录模型，可以是动画历史或日记
 class UnionHistoryRecord {

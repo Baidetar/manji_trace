@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:animetrace/components/anime_custom_cover.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 import 'package:get/get.dart';
 
 class AnimeDisplayController extends GetxController {

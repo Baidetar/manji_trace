@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:animetrace/controllers/app_upgrade_controller.dart';
+import 'package:manji_trace/controllers/app_upgrade_controller.dart';
 
 class BangumiApi {
   static Map<String, dynamic> headers = {

@@ -1,18 +1,18 @@
-import 'package:animetrace/models/enum/anime_area.dart';
-import 'package:animetrace/models/enum/anime_category.dart';
+import 'package:manji_trace/models/enum/anime_area.dart';
+import 'package:manji_trace/models/enum/anime_category.dart';
 import 'package:darty_json/darty_json.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/bangumi/bangumi.dart';
-import 'package:animetrace/models/enum/play_status.dart';
-import 'package:animetrace/models/week_record.dart';
-import 'package:animetrace/repositories/bangumi_repository.dart';
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/utils/climb/site_collection_tab.dart';
-import 'package:animetrace/utils/climb/user_collection.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/network/bangumi_api.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/bangumi/bangumi.dart';
+import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/models/week_record.dart';
+import 'package:manji_trace/repositories/bangumi_repository.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/utils/climb/site_collection_tab.dart';
+import 'package:manji_trace/utils/climb/user_collection.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/network/bangumi_api.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/values/values.dart';
 import 'package:html/dom.dart';
 
 class ClimbBangumi with Climb {

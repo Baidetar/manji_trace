@@ -1,16 +1,16 @@
 import 'package:dio/dio.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/anime_filter.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/models/params/result.dart';
-import 'package:animetrace/models/week_record.dart';
-import 'package:animetrace/utils/climb/site_collection_tab.dart';
-import 'package:animetrace/utils/climb/user_collection.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/anime_filter.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/models/params/result.dart';
+import 'package:manji_trace/models/week_record.dart';
+import 'package:manji_trace/utils/climb/site_collection_tab.dart';
+import 'package:manji_trace/utils/climb/user_collection.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 import 'package:html/dom.dart';
 import 'package:html/parser.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 
 mixin Climb {
   late String idName;

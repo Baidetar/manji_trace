@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/models/journal_note.dart';
-// import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/pages/journal_note/journal_note_controller.dart';
-import 'package:animetrace/pages/journal_note/widgets/journal_note_editor.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/models/journal_note.dart';
+// import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/pages/journal_note/journal_note_controller.dart';
+import 'package:manji_trace/pages/journal_note/widgets/journal_note_editor.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 

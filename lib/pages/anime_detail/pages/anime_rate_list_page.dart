@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/components/note/note_card.dart';
-import 'package:animetrace/dao/note_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/note.dart';
-import 'package:animetrace/pages/modules/note_edit.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/components/note/note_card.dart';
+import 'package:manji_trace/dao/note_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/note.dart';
+import 'package:manji_trace/pages/modules/note_edit.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
 // 动漫详细页的评价列表页

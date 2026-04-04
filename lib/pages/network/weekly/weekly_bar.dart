@@ -1,7 +1,7 @@
-import 'package:animetrace/pages/network/weekly/weekly_controller.dart';
+import 'package:manji_trace/pages/network/weekly/weekly_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/time_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/time_util.dart';
 
 /// 周日期栏
 /// 不要转为无状态组件，因为要传入selectedWeekday，而它不是const，所以无法使用const WeeklyBar

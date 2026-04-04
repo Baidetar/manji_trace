@@ -1,15 +1,15 @@
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/launch_uri_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/values/sp_key.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/launch_uri_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/values/sp_key.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:flutter/material.dart';
 
-import 'package:animetrace/models/anime.dart';
+import 'package:manji_trace/models/anime.dart';
 
 /// 迁移比较页
 /// 提交会直接更新动漫表

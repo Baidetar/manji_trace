@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class LaunchUrlUtil {

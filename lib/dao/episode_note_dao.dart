@@ -1,6 +1,6 @@
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/enum/note_type.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
 
 class EpisodeNoteDao {
   /// 获取最近创建笔记的动漫

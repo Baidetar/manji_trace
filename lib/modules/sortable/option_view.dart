@@ -1,4 +1,4 @@
-import 'package:animetrace/modules/sortable/sortable.dart';
+import 'package:manji_trace/modules/sortable/sortable.dart';
 import 'package:flutter/material.dart';
 
 class SortOptionView extends StatelessWidget {

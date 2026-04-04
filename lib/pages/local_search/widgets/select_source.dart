@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/website_logo.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/pages/local_search/controllers/local_search_controller.dart';
-import 'package:animetrace/pages/local_search/models/local_select_filter.dart';
-import 'package:animetrace/utils/global_data.dart';
+import 'package:manji_trace/components/website_logo.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/pages/local_search/controllers/local_search_controller.dart';
+import 'package:manji_trace/pages/local_search/models/local_select_filter.dart';
+import 'package:manji_trace/utils/global_data.dart';
 import 'package:get/get.dart';
 
 class SelectSourceView extends StatefulWidget {

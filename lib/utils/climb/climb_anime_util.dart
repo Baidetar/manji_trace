@@ -1,16 +1,16 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/models/anime_update_record.dart';
-import 'package:animetrace/controllers/update_record_controller.dart';
-import 'package:animetrace/models/migrate_config.dart';
-import 'package:animetrace/models/week_record.dart';
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/dao/update_record_dao.dart';
-import 'package:animetrace/utils/global_data.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/models/anime_update_record.dart';
+import 'package:manji_trace/controllers/update_record_controller.dart';
+import 'package:manji_trace/models/migrate_config.dart';
+import 'package:manji_trace/models/week_record.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/dao/update_record_dao.dart';
+import 'package:manji_trace/utils/global_data.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:queue/queue.dart';
 
 class ClimbAnimeUtil {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/dialog/dialog_select_uint.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/anime_episode_info.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/components/dialog/dialog_select_uint.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/anime_episode_info.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 
 class EpisodeForm extends StatefulWidget {
   const EpisodeForm({required this.anime, super.key});

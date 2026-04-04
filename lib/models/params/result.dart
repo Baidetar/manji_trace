@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class Result<T> {
   int code;

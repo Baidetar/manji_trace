@@ -1,5 +1,5 @@
-import 'package:animetrace/dao/anime_label_dao.dart';
-import 'package:animetrace/models/label.dart';
+import 'package:manji_trace/dao/anime_label_dao.dart';
+import 'package:manji_trace/models/label.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../utils/log.dart';

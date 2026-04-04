@@ -1,4 +1,4 @@
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 
 class MainScreenStyle {
   static String get showNoteTabInMainScreenKey => 'showNoteTabInMainScreen';

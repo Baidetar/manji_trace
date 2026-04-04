@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/utils/extensions/color.dart';
-import 'package:animetrace/widgets/bottom_sheet.dart';
-import 'package:animetrace/widgets/picker/flutter_picker_fix_mouse_scroll.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
+import 'package:manji_trace/widgets/bottom_sheet.dart';
+import 'package:manji_trace/widgets/picker/flutter_picker_fix_mouse_scroll.dart';
 
 const _pickerHeight = 240.0;
 const _headerHeight = 60.0;

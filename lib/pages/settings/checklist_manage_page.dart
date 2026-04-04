@@ -2,10 +2,10 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:animetrace/pages/anime_collection/checklist_controller.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
 
 class ChecklistManagePage extends StatefulWidget {
   const ChecklistManagePage({Key? key}) : super(key: key);

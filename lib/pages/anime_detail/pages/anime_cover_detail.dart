@@ -1,21 +1,21 @@
 import 'dart:io';
 
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/anime_detail/controllers/anime_controller.dart';
-import 'package:animetrace/pages/settings/image_path_setting.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/extensions/color.dart';
-import 'package:animetrace/utils/image_util.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/anime_detail/controllers/anime_controller.dart';
+import 'package:manji_trace/pages/settings/image_path_setting.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
+import 'package:manji_trace/utils/image_util.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:photo_view/photo_view.dart';
 
 import '../../../global.dart';

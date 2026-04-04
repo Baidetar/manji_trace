@@ -1,8 +1,8 @@
-import 'package:animetrace/models/bangumi/bangumi.dart';
-import 'package:animetrace/models/bangumi/character_graph.dart';
-import 'package:animetrace/models/params/result.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/network/bangumi_api.dart';
+import 'package:manji_trace/models/bangumi/bangumi.dart';
+import 'package:manji_trace/models/bangumi/character_graph.dart';
+import 'package:manji_trace/models/params/result.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/network/bangumi_api.dart';
 
 class BangumiRepository {
   final episodesLimit = 1000;

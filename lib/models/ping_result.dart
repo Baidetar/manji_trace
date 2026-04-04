@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/values/values.dart';
 
 class PingStatus {
   bool pinging; // 正在ping

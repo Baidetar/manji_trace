@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/common_tab_bar.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/widgets/common_tab_bar_view.dart';
+import 'package:manji_trace/components/common_tab_bar.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/widgets/common_tab_bar_view.dart';
 
 /// 动漫详情页ui和集排序设置
 class AnimeDetailUISettingPage extends StatefulWidget {

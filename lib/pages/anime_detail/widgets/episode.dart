@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/pages/anime_detail/controllers/anime_controller.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/episode.dart';
-import 'package:animetrace/pages/anime_detail/widgets/episode_item_auto_load_note.dart';
-import 'package:animetrace/pages/anime_detail/widgets/review_infos.dart';
-import 'package:animetrace/utils/episode.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/bottom_sheet.dart';
-import 'package:animetrace/widgets/svg_asset_icon.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/pages/anime_detail/controllers/anime_controller.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/episode.dart';
+import 'package:manji_trace/pages/anime_detail/widgets/episode_item_auto_load_note.dart';
+import 'package:manji_trace/pages/anime_detail/widgets/review_infos.dart';
+import 'package:manji_trace/utils/episode.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/bottom_sheet.dart';
+import 'package:manji_trace/widgets/svg_asset_icon.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
 class AnimeDetailEpisodeInfo extends StatefulWidget {

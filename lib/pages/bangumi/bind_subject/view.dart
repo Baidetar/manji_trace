@@ -1,5 +1,5 @@
-import 'package:animetrace/pages/network/climb/anime_climb_one_website.dart';
-import 'package:animetrace/utils/global_data.dart';
+import 'package:manji_trace/pages/network/climb/anime_climb_one_website.dart';
+import 'package:manji_trace/utils/global_data.dart';
 import 'package:flutter/material.dart';
 
 class BindBgmSubjectView extends StatefulWidget {

@@ -1,16 +1,16 @@
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/bangumi/character.dart';
-import 'package:animetrace/modules/load_status/load_status.dart';
-import 'package:animetrace/modules/load_status/page.dart';
-import 'package:animetrace/pages/bangumi/bind_subject/view.dart';
-import 'package:animetrace/pages/bangumi/character_detail/view.dart';
-import 'package:animetrace/pages/viewer/network_image/network_image_page.dart';
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/string.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/bangumi/character.dart';
+import 'package:manji_trace/modules/load_status/load_status.dart';
+import 'package:manji_trace/modules/load_status/page.dart';
+import 'package:manji_trace/pages/bangumi/bind_subject/view.dart';
+import 'package:manji_trace/pages/bangumi/character_detail/view.dart';
+import 'package:manji_trace/pages/viewer/network_image/network_image_page.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/string.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/common_image.dart';
-import 'package:animetrace/pages/bangumi/subject_detail/logic.dart';
+import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/pages/bangumi/subject_detail/logic.dart';
 import 'package:get/get.dart' hide GetDynamicUtils;
 
 class BangumiSubjectDetailPage extends StatefulWidget {

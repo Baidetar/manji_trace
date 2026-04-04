@@ -3,12 +3,12 @@ import 'package:get/get.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'package:animetrace/dao/history_dao.dart';
-import 'package:animetrace/models/history_plus.dart';
-import 'package:animetrace/models/journal_note.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/dao/history_dao.dart';
+import 'package:manji_trace/models/history_plus.dart';
+import 'package:manji_trace/models/journal_note.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 enum HistoryLabel {

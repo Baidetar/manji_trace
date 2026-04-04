@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/note/note_img_item.dart';
-import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/widgets/responsive.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/components/note/note_img_item.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/widgets/responsive.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/values/values.dart';
 
 // 用于显示笔记图片网格
 // 使用：笔记列表页

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/utils/extensions/color.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
 
 class StackAppBar extends StatelessWidget {
   const StackAppBar({

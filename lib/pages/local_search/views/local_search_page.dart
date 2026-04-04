@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_list_tile.dart';
-import 'package:animetrace/components/search_app_bar.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/label.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/pages/local_search/controllers/local_search_controller.dart';
-import 'package:animetrace/pages/local_search/widgets/local_filter_chip.dart';
-import 'package:animetrace/pages/network/climb/anime_climb_all_website.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/components/anime_list_tile.dart';
+import 'package:manji_trace/components/search_app_bar.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/label.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/pages/local_search/controllers/local_search_controller.dart';
+import 'package:manji_trace/pages/local_search/widgets/local_filter_chip.dart';
+import 'package:manji_trace/pages/network/climb/anime_climb_all_website.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:get/get.dart';
 
 /// 搜索已添加的动漫

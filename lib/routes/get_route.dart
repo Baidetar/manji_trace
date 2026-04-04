@@ -1,6 +1,6 @@
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/animation/shared_axis_transition_route.dart';
+import 'package:manji_trace/animation/shared_axis_transition_route.dart';
 import 'package:get/get.dart';
 
 class RouteUtil {

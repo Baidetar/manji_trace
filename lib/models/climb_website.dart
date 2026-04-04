@@ -1,6 +1,6 @@
-import 'package:animetrace/utils/climb/climb.dart';
-import 'package:animetrace/models/ping_result.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/utils/climb/climb.dart';
+import 'package:manji_trace/models/ping_result.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 
 class ClimbWebsite {
   int id;

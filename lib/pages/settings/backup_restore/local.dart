@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import 'package:animetrace/components/dialog/dialog_share_error_log.dart';
+import 'package:manji_trace/components/dialog/dialog_share_error_log.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/utils/backup_util.dart';
-import 'package:animetrace/utils/file_picker_util.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/widgets/setting_card.dart';
+import 'package:manji_trace/utils/backup_util.dart';
+import 'package:manji_trace/utils/file_picker_util.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/widgets/setting_card.dart';
 
 class LocalBackupPage extends StatefulWidget {
   const LocalBackupPage({super.key});

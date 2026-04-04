@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/utils/launch_uri_util.dart';
+import 'package:manji_trace/utils/launch_uri_util.dart';
 
 class CategoryIntroPage extends StatelessWidget {
   const CategoryIntroPage({super.key});

@@ -1,13 +1,13 @@
-import 'package:animetrace/components/anime_custom_cover.dart';
-import 'package:animetrace/controllers/anime_display_controller.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
+import 'package:manji_trace/controllers/anime_display_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/pages/viewer/network_image/network_image_page.dart';
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/pages/viewer/network_image/network_image_page.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 
 /// 自动根据动漫详细地址来获取封面和信息
 /// 注意配合List/Grid.builder懒加载时，后面的组件因没有渲染，所以暂时不会获取封面和信息

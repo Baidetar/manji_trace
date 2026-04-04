@@ -1,5 +1,5 @@
-import 'package:animetrace/dao/label_dao.dart';
-import 'package:animetrace/utils/regexp.dart';
+import 'package:manji_trace/dao/label_dao.dart';
+import 'package:manji_trace/utils/regexp.dart';
 
 class Label {
   int id;

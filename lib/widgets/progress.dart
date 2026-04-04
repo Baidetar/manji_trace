@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/percent_bar.dart';
+import 'package:manji_trace/components/percent_bar.dart';
 
 class ProgressController extends ChangeNotifier {
   int _count = 0;

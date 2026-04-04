@@ -1,6 +1,6 @@
-import 'package:animetrace/dao/episode_desc_dao.dart';
-import 'package:animetrace/models/note.dart';
-import 'package:animetrace/utils/time_util.dart';
+import 'package:manji_trace/dao/episode_desc_dao.dart';
+import 'package:manji_trace/models/note.dart';
+import 'package:manji_trace/utils/time_util.dart';
 
 class Episode {
   final int _number; // 第几集

@@ -1,7 +1,7 @@
-import 'package:animetrace/dao/label_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/label.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/dao/label_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/label.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../utils/sqlite_util.dart';

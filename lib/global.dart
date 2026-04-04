@@ -1,23 +1,23 @@
 import 'dart:io';
 
-import 'package:animetrace/controllers/anime_service.dart';
-import 'package:animetrace/controllers/setting_service.dart';
+import 'package:manji_trace/controllers/anime_service.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:animetrace/controllers/anime_display_controller.dart';
-import 'package:animetrace/controllers/app_upgrade_controller.dart';
-import 'package:animetrace/controllers/backup_service.dart';
-import 'package:animetrace/controllers/labels_controller.dart';
-import 'package:animetrace/controllers/remote_controller.dart';
-import 'package:animetrace/controllers/update_record_controller.dart';
-import 'package:animetrace/pages/anime_collection/checklist_controller.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
+import 'package:manji_trace/controllers/anime_display_controller.dart';
+import 'package:manji_trace/controllers/app_upgrade_controller.dart';
+import 'package:manji_trace/controllers/backup_service.dart';
+import 'package:manji_trace/controllers/labels_controller.dart';
+import 'package:manji_trace/controllers/remote_controller.dart';
+import 'package:manji_trace/controllers/update_record_controller.dart';
+import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -32,7 +32,7 @@ class Global {
   static bool get isRelease => const bool.fromEnvironment("dart.vm.product");
 
   /// 设备预览
-  static bool get enableDevicePreview => true;
+  static bool get enableDevicePreview => false;
 
   /// 修改了笔记图片根路径
   static bool modifiedImgRootPath = false;

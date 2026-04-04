@@ -2,18 +2,18 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/common_image.dart';
+import 'package:manji_trace/components/common_image.dart';
 
-import 'package:animetrace/global.dart';
-import 'package:animetrace/pages/settings/image_path_setting.dart';
-import 'package:animetrace/utils/file_util.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/widgets/multi_platform.dart';
-import 'package:animetrace/widgets/stack_appbar.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/pages/settings/image_path_setting.dart';
+import 'package:manji_trace/utils/file_util.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/widgets/multi_platform.dart';
+import 'package:manji_trace/widgets/stack_appbar.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 // 图片浏览器
 class ImageViewerPage extends StatefulWidget {

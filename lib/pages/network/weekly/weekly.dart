@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_item_auto_load.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/components/website_logo.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/models/week_record.dart';
-import 'package:animetrace/pages/network/weekly/weekly_bar.dart';
-import 'package:animetrace/pages/network/weekly/weekly_controller.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/global_data.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/components/anime_item_auto_load.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/components/website_logo.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/models/week_record.dart';
+import 'package:manji_trace/pages/network/weekly/weekly_bar.dart';
+import 'package:manji_trace/pages/network/weekly/weekly_controller.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/global_data.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/values/values.dart';
 
 /// 周表
 class WeeklyPage extends StatefulWidget {

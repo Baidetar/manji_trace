@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:animetrace/models/relative_local_image.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
 
 class JournalNote {
   int id;

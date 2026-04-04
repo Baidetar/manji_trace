@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/widgets/common_divider.dart';
+import 'package:manji_trace/widgets/common_divider.dart';
 
 class CommonScaffoldBody extends StatelessWidget {
   const CommonScaffoldBody({super.key, required this.child});

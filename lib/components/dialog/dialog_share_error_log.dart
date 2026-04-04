@@ -1,5 +1,5 @@
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:flutter/material.dart';
 
 Future<void> showShareErrorLog({String content = ""}) async {

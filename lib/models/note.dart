@@ -1,6 +1,6 @@
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/episode.dart';
-import 'package:animetrace/models/relative_local_image.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/episode.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
 
 class Note {
   int id;

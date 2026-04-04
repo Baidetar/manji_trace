@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_list_tile.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/dao/episode_note_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/enum/note_type.dart';
+import 'package:manji_trace/components/anime_list_tile.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/dao/episode_note_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 
 class RecentlyCreateNoteAnimeListPage extends StatefulWidget {

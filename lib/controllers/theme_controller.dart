@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/setting_service.dart';
-import 'package:animetrace/utils/sp_profile.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
+import 'package:manji_trace/utils/sp_profile.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
 
 const _primaryColorKey = 'customPrimaryColor';

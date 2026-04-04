@@ -1,6 +1,6 @@
-import 'package:animetrace/models/app_release.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/models/app_release.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:get/get.dart';
 
 class ChangelogLogic extends GetxController {

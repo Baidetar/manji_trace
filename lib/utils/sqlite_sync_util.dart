@@ -1,6 +1,6 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:animetrace/models/sync_version_model.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/models/sync_version_model.dart';
+import 'package:manji_trace/utils/log.dart';
 
 /// SQLite同步版本数据库工具
 class SqliteSyncUtil {

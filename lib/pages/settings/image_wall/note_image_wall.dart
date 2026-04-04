@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/dao/image_dao.dart';
-import 'package:animetrace/pages/settings/image_wall/view.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/dao/image_dao.dart';
+import 'package:manji_trace/pages/settings/image_wall/view.dart';
 
 class NoteImageWallPage extends StatefulWidget {
   const NoteImageWallPage({super.key, this.animeId});

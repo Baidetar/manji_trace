@@ -1,10 +1,10 @@
-import 'package:animetrace/widgets/connected_button_groups.dart';
+import 'package:manji_trace/widgets/connected_button_groups.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/theme_controller.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
-import 'package:animetrace/widgets/setting_card.dart';
+import 'package:manji_trace/controllers/theme_controller.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/widgets/setting_card.dart';
 import 'package:get/get.dart';
 
 class ThemePage extends StatefulWidget {

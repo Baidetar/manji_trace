@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/loading_widget.dart';
+import 'package:manji_trace/components/loading_widget.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
 class FadeAnimatedSwitcher extends StatelessWidget {

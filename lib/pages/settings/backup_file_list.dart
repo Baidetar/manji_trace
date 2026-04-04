@@ -1,14 +1,14 @@
-import 'package:animetrace/components/dialog/dialog_share_error_log.dart';
+import 'package:manji_trace/components/dialog/dialog_share_error_log.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/animation/fade_animated_switcher.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/components/loading_widget.dart';
-import 'package:animetrace/utils/backup_util.dart';
-import 'package:animetrace/utils/file_util.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/animation/fade_animated_switcher.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/components/loading_widget.dart';
+import 'package:manji_trace/utils/backup_util.dart';
+import 'package:manji_trace/utils/file_util.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:webdav_client/webdav_client.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class BackUpFileListPage extends StatefulWidget {
   const BackUpFileListPage({Key? key}) : super(key: key);

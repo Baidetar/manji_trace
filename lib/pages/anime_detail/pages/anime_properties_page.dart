@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:animetrace/components/dialog/dialog_select_play_status.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/enum/anime_area.dart';
-import 'package:animetrace/models/enum/anime_category.dart';
-import 'package:animetrace/pages/anime_detail/controllers/anime_controller.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/common/category_intro_page.dart';
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/launch_uri_util.dart';
-import 'package:animetrace/widgets/picker/date_time_picker.dart';
-import 'package:animetrace/widgets/picker/flutter_picker_fix_mouse_scroll.dart';
+import 'package:manji_trace/components/dialog/dialog_select_play_status.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/enum/anime_area.dart';
+import 'package:manji_trace/models/enum/anime_category.dart';
+import 'package:manji_trace/pages/anime_detail/controllers/anime_controller.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/common/category_intro_page.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/launch_uri_util.dart';
+import 'package:manji_trace/widgets/picker/date_time_picker.dart';
+import 'package:manji_trace/widgets/picker/flutter_picker_fix_mouse_scroll.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class AnimePropertiesPage extends StatelessWidget {
   AnimePropertiesPage({required this.animeController, Key? key})

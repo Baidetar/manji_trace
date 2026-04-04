@@ -1,11 +1,11 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/models/anime_update_record.dart';
-import 'package:animetrace/models/vo/update_record_vo.dart';
-import 'package:animetrace/dao/update_record_dao.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/models/anime_update_record.dart';
+import 'package:manji_trace/models/vo/update_record_vo.dart';
+import 'package:manji_trace/dao/update_record_dao.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class UpdateRecordController extends GetxController {
   static UpdateRecordController get to => Get.find();

@@ -1,10 +1,10 @@
-import 'package:animetrace/controllers/setting_service.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/dao/series_dao.dart';
-import 'package:animetrace/models/series.dart';
-import 'package:animetrace/pages/settings/series/manage/style.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/dao/series_dao.dart';
+import 'package:manji_trace/models/series.dart';
+import 'package:manji_trace/pages/settings/series/manage/style.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:get/get.dart';
 
 class SeriesManageLogic extends GetxController {

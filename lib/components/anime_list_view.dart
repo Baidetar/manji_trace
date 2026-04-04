@@ -1,13 +1,13 @@
-import 'package:animetrace/pages/network/sources/pages/migrate/migrate_compare_page.dart';
-import 'package:animetrace/routes/get_route.dart';
+import 'package:manji_trace/pages/network/sources/pages/migrate/migrate_compare_page.dart';
+import 'package:manji_trace/routes/get_route.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_custom_cover.dart';
-import 'package:animetrace/components/dialog/dialog_select_checklist.dart';
-import 'package:animetrace/controllers/anime_display_controller.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/widgets/responsive.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
+import 'package:manji_trace/components/dialog/dialog_select_checklist.dart';
+import 'package:manji_trace/controllers/anime_display_controller.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/widgets/responsive.dart';
 
 class AnimeHorizontalListView extends StatefulWidget {
   final List<Anime> animes;

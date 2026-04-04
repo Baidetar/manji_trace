@@ -1,18 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:animetrace/models/journal_note.dart';
-import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/components/note/note_img_item.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/models/journal_note.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/components/note/note_img_item.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:reorderable_grid_view/reorderable_grid_view.dart';
-import 'package:animetrace/widgets/responsive.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/widgets/responsive.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:path/path.dart' as p;
 
 class JournalNoteEditor extends StatefulWidget {

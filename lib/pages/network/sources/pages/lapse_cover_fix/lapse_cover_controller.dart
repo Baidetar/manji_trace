@@ -1,13 +1,13 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/global.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/data_state.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/widgets/progress.dart';
-import 'package:animetrace/utils/climb/climb_anime_util.dart';
-import 'package:animetrace/utils/dio_util.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/data_state.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/widgets/progress.dart';
+import 'package:manji_trace/utils/climb/climb_anime_util.dart';
+import 'package:manji_trace/utils/dio_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:get/get.dart';
 import 'package:queue/queue.dart';
 

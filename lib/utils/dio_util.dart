@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:animetrace/utils/error_format_util.dart';
-import 'package:animetrace/models/ping_result.dart';
-import 'package:animetrace/models/params/result.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/network/dio_log_interceptor.dart';
+import 'package:manji_trace/utils/error_format_util.dart';
+import 'package:manji_trace/models/ping_result.dart';
+import 'package:manji_trace/models/params/result.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/network/dio_log_interceptor.dart';
 import 'package:dio/io.dart';
 
 class DioUtil {

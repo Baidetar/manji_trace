@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/labels_controller.dart';
-import 'package:animetrace/models/label.dart';
-import 'package:animetrace/widgets/emoji_leading.dart';
+import 'package:manji_trace/controllers/labels_controller.dart';
+import 'package:manji_trace/models/label.dart';
+import 'package:manji_trace/widgets/emoji_leading.dart';
 
 class RecommendedLabelListView extends StatefulWidget {
   const RecommendedLabelListView({super.key});

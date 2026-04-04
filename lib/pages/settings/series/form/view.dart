@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/values/values.dart';
-import 'package:animetrace/widgets/button/action_button.dart';
-import 'package:animetrace/widgets/common_text_field.dart';
-import 'package:animetrace/widgets/limit_width_center.dart';
+import 'package:manji_trace/values/values.dart';
+import 'package:manji_trace/widgets/button/action_button.dart';
+import 'package:manji_trace/widgets/common_text_field.dart';
+import 'package:manji_trace/widgets/limit_width_center.dart';
 
 import '../../../../dao/series_dao.dart';
 import '../../../../models/series.dart';

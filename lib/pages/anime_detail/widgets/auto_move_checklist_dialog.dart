@@ -1,5 +1,5 @@
-import 'package:animetrace/pages/anime_collection/checklist_controller.dart';
-import 'package:animetrace/utils/sp_util.dart';
+import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
+import 'package:manji_trace/utils/sp_util.dart';
 import 'package:flutter/material.dart';
 
 class AutoMoveChecklistDialog extends StatefulWidget {

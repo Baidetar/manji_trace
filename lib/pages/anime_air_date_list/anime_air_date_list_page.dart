@@ -1,7 +1,7 @@
-import 'package:animetrace/components/anime_custom_cover.dart';
+import 'package:manji_trace/components/anime_custom_cover.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/anime_list_view.dart';
-import 'package:animetrace/pages/anime_air_date_list/anime_air_date_list_controller.dart';
+import 'package:manji_trace/components/anime_list_view.dart';
+import 'package:manji_trace/pages/anime_air_date_list/anime_air_date_list_controller.dart';
 import 'package:get/get.dart';
 import 'package:super_sliver_list/super_sliver_list.dart';
 

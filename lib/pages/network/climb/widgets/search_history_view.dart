@@ -1,5 +1,5 @@
-import 'package:animetrace/controllers/setting_service.dart';
-import 'package:animetrace/values/theme.dart';
+import 'package:manji_trace/controllers/setting_service.dart';
+import 'package:manji_trace/values/theme.dart';
 import 'package:flutter/material.dart';
 
 class SearchHistoryView extends StatelessWidget {

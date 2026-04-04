@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:animetrace/models/page_switch_animation.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/models/page_switch_animation.dart';
+import 'package:manji_trace/utils/log.dart';
 
 import 'sp_util.dart';
 

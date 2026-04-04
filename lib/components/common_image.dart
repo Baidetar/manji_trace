@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/global.dart';
-import 'package:animetrace/utils/extensions/color.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/utils/extensions/color.dart';
 import 'package:transparent_image/transparent_image.dart';
 
 class CommonImage extends StatelessWidget {

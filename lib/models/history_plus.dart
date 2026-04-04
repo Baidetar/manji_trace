@@ -1,4 +1,4 @@
-import 'package:animetrace/models/union_history_record.dart';
+import 'package:manji_trace/models/union_history_record.dart';
 
 class HistoryPlus {
   String date;

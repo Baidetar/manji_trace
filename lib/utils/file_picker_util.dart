@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/image_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/image_util.dart';
 import 'package:path/path.dart' as p;
 
 Future<String?> selectFile() async {

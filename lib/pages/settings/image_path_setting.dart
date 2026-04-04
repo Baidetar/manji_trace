@@ -1,13 +1,13 @@
 import 'dart:io';
 
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/global.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/utils/launch_uri_util.dart';
-import 'package:animetrace/widgets/common_scaffold_body.dart';
-import 'package:animetrace/widgets/setting_card.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/launch_uri_util.dart';
+import 'package:manji_trace/widgets/common_scaffold_body.dart';
+import 'package:manji_trace/widgets/setting_card.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ImagePathSetting extends StatefulWidget {

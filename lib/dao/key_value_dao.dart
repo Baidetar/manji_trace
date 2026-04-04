@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class KeyValueDao {

@@ -1,4 +1,4 @@
-import 'package:animetrace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class EpisodeDesc {

@@ -1,10 +1,10 @@
-import 'package:animetrace/models/journal_note.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/utils/time_util.dart';
-import 'package:animetrace/dao/image_dao.dart';
+import 'package:manji_trace/models/journal_note.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/time_util.dart';
+import 'package:manji_trace/dao/image_dao.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class JournalNoteDao {

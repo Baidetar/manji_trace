@@ -1,7 +1,7 @@
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/union_history_record.dart';
-import 'package:animetrace/utils/episode.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/union_history_record.dart';
+import 'package:manji_trace/utils/episode.dart';
+import 'package:manji_trace/utils/log.dart';
 
 import '../models/anime.dart';
 import '../models/anime_history_record.dart';

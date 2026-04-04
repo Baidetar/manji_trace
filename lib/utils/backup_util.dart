@@ -1,25 +1,25 @@
 import 'dart:io';
 
 import 'package:archive/archive_io.dart';
-import 'package:animetrace/controllers/labels_controller.dart';
-import 'package:animetrace/controllers/remote_controller.dart';
-import 'package:animetrace/controllers/update_record_controller.dart';
-import 'package:animetrace/dao/history_dao.dart';
-import 'package:animetrace/dao/label_dao.dart';
-import 'package:animetrace/models/params/result.dart';
-import 'package:animetrace/models/sync_version_model.dart';
-import 'package:animetrace/pages/anime_collection/checklist_controller.dart';
-import 'package:animetrace/pages/network/sources/pages/dedup/dedup_controller.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/utils/sqlite_util.dart';
-import 'package:animetrace/utils/sqlite_sync_util.dart';
-import 'package:animetrace/utils/webdav_util.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/values/values.dart';
+import 'package:manji_trace/controllers/labels_controller.dart';
+import 'package:manji_trace/controllers/remote_controller.dart';
+import 'package:manji_trace/controllers/update_record_controller.dart';
+import 'package:manji_trace/dao/history_dao.dart';
+import 'package:manji_trace/dao/label_dao.dart';
+import 'package:manji_trace/models/params/result.dart';
+import 'package:manji_trace/models/sync_version_model.dart';
+import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
+import 'package:manji_trace/pages/network/sources/pages/dedup/dedup_controller.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/sqlite_sync_util.dart';
+import 'package:manji_trace/utils/webdav_util.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
-import 'package:animetrace/utils/toast_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:webdav_client/webdav_client.dart' as dav_client;
 
 class BackupUtil {
@@ -290,7 +290,7 @@ class BackupUtil {
   }
 
   static deleteOldAutoBackupFileFromRemote(String autoBackupDirPath) async {
-    var files = await WebDavUtil.client.readDir("/animetrace/automatic");
+    var files = await WebDavUtil.client.readDir("/manji_trace/automatic");
     files.sort((a, b) {
       return a.mTime.toString().compareTo(b.mTime.toString());
     });
@@ -302,8 +302,8 @@ class BackupUtil {
       if (path != null &&
           path.contains('backup') && // 包含backup
           // && path.startsWith(
-          // "/animetrace/automatic/animetrace-backup") && // 以animetrace-backup开头
-          // "/animetrace/automatic/$backupZipNamePrefix") && // 以$backupZipNamePrefix开头
+          // "/manji_trace/automatic/animetrace-backup") && // 以animetrace-backup开头
+          // "/manji_trace/automatic/$backupZipNamePrefix") && // 以$backupZipNamePrefix开头
           path.endsWith(".zip")) {
         AppLog.info("删除文件：$path");
         WebDavUtil.client.remove(path);

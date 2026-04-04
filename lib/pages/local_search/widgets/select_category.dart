@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/models/enum/anime_category.dart';
-import 'package:animetrace/pages/local_search/controllers/local_search_controller.dart';
-import 'package:animetrace/pages/local_search/models/local_select_filter.dart';
+import 'package:manji_trace/models/enum/anime_category.dart';
+import 'package:manji_trace/pages/local_search/controllers/local_search_controller.dart';
+import 'package:manji_trace/pages/local_search/models/local_select_filter.dart';
 import 'package:get/get.dart';
 
 class SelectCategoryView extends StatefulWidget {

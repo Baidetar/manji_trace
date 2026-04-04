@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:animetrace/animation/fade_animated_switcher.dart';
-import 'package:animetrace/components/anime_list_tile.dart';
-import 'package:animetrace/components/empty_data_hint.dart';
-import 'package:animetrace/dao/anime_dao.dart';
-import 'package:animetrace/models/anime.dart';
-import 'package:animetrace/models/climb_website.dart';
-import 'package:animetrace/models/params/page_params.dart';
-import 'package:animetrace/pages/anime_detail/anime_detail.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/animation/fade_animated_switcher.dart';
+import 'package:manji_trace/components/anime_list_tile.dart';
+import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/dao/anime_dao.dart';
+import 'package:manji_trace/models/anime.dart';
+import 'package:manji_trace/models/climb_website.dart';
+import 'package:manji_trace/models/params/page_params.dart';
+import 'package:manji_trace/pages/anime_detail/anime_detail.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class AnimeListInSource extends StatefulWidget {
   final ClimbWebsite website;

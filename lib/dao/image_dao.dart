@@ -1,9 +1,9 @@
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/models/relative_local_image.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../utils/sqlite_util.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 class ImageDao {
   static Database get database => SqliteUtil.database;

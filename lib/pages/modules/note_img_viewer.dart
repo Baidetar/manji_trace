@@ -2,22 +2,22 @@ import 'dart:io';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/components/common_image.dart';
+import 'package:manji_trace/components/common_image.dart';
 
-import 'package:animetrace/global.dart';
-import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/pages/settings/image_path_setting.dart';
-import 'package:animetrace/utils/common_util.dart';
-import 'package:animetrace/utils/file_util.dart';
-import 'package:animetrace/utils/image_util.dart';
-import 'package:animetrace/utils/platform.dart';
-import 'package:animetrace/utils/sp_util.dart';
-import 'package:animetrace/widgets/bottom_sheet.dart';
-import 'package:animetrace/widgets/multi_platform.dart';
-import 'package:animetrace/widgets/setting_title.dart';
+import 'package:manji_trace/global.dart';
+import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/pages/settings/image_path_setting.dart';
+import 'package:manji_trace/utils/common_util.dart';
+import 'package:manji_trace/utils/file_util.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sp_util.dart';
+import 'package:manji_trace/widgets/bottom_sheet.dart';
+import 'package:manji_trace/widgets/multi_platform.dart';
+import 'package:manji_trace/widgets/setting_title.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 import 'package:photo_view/photo_view_gallery.dart';
-import 'package:animetrace/utils/log.dart';
+import 'package:manji_trace/utils/log.dart';
 
 // 点击笔记图片，进入浏览页面
 class ImageViewerPage extends StatefulWidget {

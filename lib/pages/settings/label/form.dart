@@ -1,14 +1,14 @@
-import 'package:animetrace/routes/get_route.dart';
-import 'package:animetrace/utils/log.dart';
-import 'package:animetrace/widgets/anchor_scroll.dart';
+import 'package:manji_trace/routes/get_route.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/widgets/anchor_scroll.dart';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:animetrace/controllers/labels_controller.dart';
-import 'package:animetrace/dao/label_dao.dart';
-import 'package:animetrace/models/label.dart';
-import 'package:animetrace/pages/settings/label/home.dart';
-import 'package:animetrace/utils/toast_util.dart';
-import 'package:animetrace/widgets/emoji_leading.dart';
+import 'package:manji_trace/controllers/labels_controller.dart';
+import 'package:manji_trace/dao/label_dao.dart';
+import 'package:manji_trace/models/label.dart';
+import 'package:manji_trace/pages/settings/label/home.dart';
+import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/widgets/emoji_leading.dart';
 
 class LabelForm extends StatefulWidget {
   const LabelForm({super.key, this.label, this.onUpdate});
