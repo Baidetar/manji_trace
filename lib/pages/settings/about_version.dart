@@ -69,26 +69,26 @@ class _AboutVersionState extends State<AboutVersion> {
                           builder: (context) => const ChangelogPage()));
                 }),
             const ListTile(title: Text("导出日志"), onTap: AppLog.share),
-            ListTile(
-                title: const Text("下载地址"),
-                subtitle: const Text("密码：eocv"),
-                trailing: const Icon(Icons.open_in_new_rounded),
-                onTap: () {
-                  LaunchUrlUtil.launch(
-                      context: context,
-                      uriStr: "https://wwc.lanzouw.com/b01uyqcrg?password=eocv",
-                      inApp: false);
-                }),
-            ListTile(
-                title: const Text("QQ 交流群"),
-                subtitle: const Text("414226908"),
-                trailing: const Icon(Icons.open_in_new_rounded),
-                onTap: () {
-                  LaunchUrlUtil.launch(
-                      context: context,
-                      uriStr: "https://jq.qq.com/?_wv=1027&k=qOpUIx7x",
-                      inApp: false);
-                }),
+            // ListTile(
+            //     title: const Text("下载地址"),
+            //     subtitle: const Text("密码：eocv"),
+            //     trailing: const Icon(Icons.open_in_new_rounded),
+            //     onTap: () {
+            //       LaunchUrlUtil.launch(
+            //           context: context,
+            //           uriStr: "https://wwc.lanzouw.com/b01uyqcrg?password=eocv",
+            //           inApp: false);
+            //     }),
+            // ListTile(
+            //     title: const Text("QQ 交流群"),
+            //     subtitle: const Text("414226908"),
+            //     trailing: const Icon(Icons.open_in_new_rounded),
+            //     onTap: () {
+            //       LaunchUrlUtil.launch(
+            //           context: context,
+            //           uriStr: "https://jq.qq.com/?_wv=1027&k=qOpUIx7x",
+            //           inApp: false);
+            //     }),
           ],
         ),
       ],
@@ -104,7 +104,7 @@ class _AboutVersionState extends State<AboutVersion> {
           onPressed: () {
             LaunchUrlUtil.launch(
                 context: context,
-                uriStr: "https://github.com/linyi102/anime_trace");
+                uriStr: "https://github.com/Baidetar/anime_trace");
           },
           icon: SvgAssetIcon(
             assetPath: Assets.icons.github,
@@ -113,19 +113,19 @@ class _AboutVersionState extends State<AboutVersion> {
                 : Colors.black,
           ),
         ),
-        IconButton(
-          splashRadius: 20,
-          onPressed: () {
-            LaunchUrlUtil.launch(
-                context: context,
-                uriStr: "https://gitee.com/linyi517/anime_trace",
-                inApp: false);
-          },
-          icon: SvgAssetIcon(
-            assetPath: Assets.icons.gitee,
-            color: const Color.fromRGBO(187, 33, 36, 1),
-          ),
-        )
+        // IconButton(
+        //   splashRadius: 20,
+        //   onPressed: () {
+        //     LaunchUrlUtil.launch(
+        //         context: context,
+        //         uriStr: "https://gitee.com/linyi517/anime_trace",
+        //         inApp: false);
+        //   },
+        //   icon: SvgAssetIcon(
+        //     assetPath: Assets.icons.gitee,
+        //     color: const Color.fromRGBO(187, 33, 36, 1),
+        //   ),
+        // )
       ],
     );
   }

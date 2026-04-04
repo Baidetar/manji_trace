@@ -371,7 +371,7 @@ class AppUpgradeController extends GetxController {
   }
 
   String _getDownloadPath(String dir, String name) {
-    // 路径：/storage/emulated/0/Android/data/com.example.flutter_test_future/cache/manji-v1.8.1-android.apk
+    // 路径：/storage/emulated/0/Android/data/com.baitang.manji_trace/cache/manji-v1.8.1-android.apk
     return p.join(dir, name);
   }
 

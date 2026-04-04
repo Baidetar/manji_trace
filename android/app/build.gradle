@@ -30,7 +30,7 @@ if (flutterVersionName == null) {
 
 android {
     // TODO com.badworld.animetrace
-    namespace 'com.example.flutter_test_future'
+    namespace 'com.baitang.manji_trace'
     compileSdkVersion 36
 
     compileOptions {
@@ -57,7 +57,7 @@ android {
 
     defaultConfig {
         // TODO com.badworld.animetrace
-        applicationId "com.example.flutter_test_future"
+        applicationId "com.baitang.manji_trace"
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion 35
         versionCode flutterVersionCode.toInteger()
