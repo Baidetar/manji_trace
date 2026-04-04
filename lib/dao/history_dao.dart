@@ -1,10 +1,12 @@
 import 'package:animetrace/dao/anime_dao.dart';
+import 'package:animetrace/models/union_history_record.dart';
 import 'package:animetrace/utils/episode.dart';
 import 'package:animetrace/utils/log.dart';
 
 import '../models/anime.dart';
 import '../models/anime_history_record.dart';
 import '../models/history_plus.dart';
+import '../models/journal_note.dart';
 import '../models/params/page_params.dart';
 import '../utils/sqlite_util.dart';
 
@@ -14,10 +16,11 @@ class HistoryDao {
   static Future<List<HistoryPlus>> getHistoryPageable(
       {required PageParams pageParams, required int dateLength}) async {
     AppLog.info("sql: getHistoryPageable: pageParams=$pageParams, dateLength=$dateLength");
-    // await Future.delayed(Duration(seconds: 2));
-    // 获取有数据的最近几天/月
+    // 获取有数据的最近几天/月（来自history表和journal_note表）
     List<Map<String, Object?>> dayList = await SqliteUtil.database.rawQuery('''
     select substr(date, 1, $dateLength) dateSubstr from history
+    union
+    select substr(update_time, 1, $dateLength) dateSubstr from journal_note
     group by dateSubstr
     order by dateSubstr desc
     limit ${pageParams.pageSize} offset ${pageParams.getOffset()};
@@ -27,15 +30,56 @@ class HistoryDao {
       list.add(map['dateSubstr'] as String);
     }
 
-    // 遍历这些日期，获取每个日期对应的records
+    // 遍历这些日期，获取每个日期对应的混合records（动画历史+日记）
     List<HistoryPlus> historys = [];
     for (var day in list) {
-      List<AnimeHistoryRecord> records = await _getHistoryRecordsByDate(day);
+      List<UnionHistoryRecord> records = await _getUnionRecordsByDate(day);
       if (records.isNotEmpty) {
         historys.add(HistoryPlus(day, records));
       }
     }
     return historys;
+  }
+
+  /// 获取某日期的混合历史记录（动画历史+日记）
+  static Future<List<UnionHistoryRecord>> _getUnionRecordsByDate(String date) async {
+    List<UnionHistoryRecord> records = [];
+
+    // 获取动画历史记录
+    final animeRecords = await _getHistoryRecordsByDate(date);
+    records.addAll(animeRecords.map<UnionHistoryRecord>((r) => UnionHistoryRecord.anime(r)));
+
+    // 获取日记
+    final notes = await _getJournalNotesByDate(date);
+    records.addAll(notes.map<UnionHistoryRecord>((n) => UnionHistoryRecord.note(n)));
+
+    // 按时间倒序混合排列（日记按updateTime，动画历史按date）
+    records.sort((a, b) {
+      String timeA = a.isAnime ? '0000-00-00' : a.noteRecord!.updateTime;
+      String timeB = b.isAnime ? '0000-00-00' : b.noteRecord!.updateTime;
+      return timeB.compareTo(timeA);
+    });
+
+    return records;
+  }
+
+  /// 获取某日期的日记
+  static Future<List<JournalNote>> _getJournalNotesByDate(String date) async {
+    var list = await SqliteUtil.database.query(
+      'journal_note',
+      where: "substr(update_time, 1, 10) = ?",
+      whereArgs: [date.padRight(10, '0').substring(0, 10)],
+      orderBy: 'update_time desc',
+    );
+    return list.map((row) {
+      return JournalNote(
+        id: row['id'] as int,
+        title: row['title'] as String? ?? '',
+        content: row['content'] as String? ?? '',
+        createTime: row['create_time'] as String? ?? '',
+        updateTime: row['update_time'] as String? ?? '',
+      );
+    }).toList();
   }
 
   static _getHistoryRecordsByDate(String date) async {

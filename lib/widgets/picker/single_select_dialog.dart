@@ -33,7 +33,7 @@ class SingleSelectDialog<T> extends StatelessWidget {
     return SimpleDialog(
       title: title,
       children: options.map((option) {
-        return RadioListTile<T>(
+        return RadioListTile<T>( // ignore: deprecated_member_use
           title: labelBuilder(option),
           value: option,
           groupValue: value,

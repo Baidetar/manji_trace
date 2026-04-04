@@ -56,7 +56,7 @@ class NoteImgItem extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text("+$imageRemainCount",
-                      textScaleFactor: 2,
+                      textScaler: const TextScaler.linear(2),
                       style: const TextStyle(
                           color: Colors.white, fontWeight: FontWeight.w600)),
                 ),

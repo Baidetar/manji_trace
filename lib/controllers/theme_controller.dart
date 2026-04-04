@@ -40,7 +40,7 @@ class ThemeController extends GetxController {
 
   Future<bool> changePrimaryColor(Color color) async {
     primaryColor.value = color;
-    return SPUtil.setInt(_primaryColorKey, color.value);
+    return SPUtil.setInt(_primaryColorKey, color.toARGB32());
   }
 
   Future<bool> resetPrimaryColor() async {

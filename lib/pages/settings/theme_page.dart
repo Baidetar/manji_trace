@@ -55,7 +55,7 @@ class _ThemePageState extends State<ThemePage> {
                       title: const Text('选择配色方案'),
                       children: DynamicSchemeVariant.values
                           .map(
-                            (e) => RadioListTile<DynamicSchemeVariant>(
+                            (e) => RadioListTile<DynamicSchemeVariant>( // ignore: deprecated_member_use
                               title: Text(e.displayName),
                               value: e,
                               groupValue:

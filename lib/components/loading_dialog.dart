@@ -14,7 +14,7 @@ class LoadingDialog extends Dialog {
 
   @override
   Widget build(BuildContext context) {
-    var bg = Theme.of(context).dialogBackgroundColor;
+    var bg = Theme.of(context).dialogTheme.backgroundColor ?? Colors.white;
     Color? fg;
 
     return Container(

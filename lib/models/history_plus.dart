@@ -1,8 +1,8 @@
-import 'package:animetrace/models/anime_history_record.dart';
+import 'package:animetrace/models/union_history_record.dart';
 
 class HistoryPlus {
   String date;
-  List<AnimeHistoryRecord> records;
+  List<UnionHistoryRecord> records;
 
   HistoryPlus(this.date, this.records);
 

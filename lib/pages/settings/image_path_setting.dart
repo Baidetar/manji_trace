@@ -4,7 +4,6 @@ import 'package:animetrace/utils/toast_util.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:animetrace/global.dart';
-import 'package:animetrace/utils/file_picker_util.dart';
 import 'package:animetrace/utils/image_util.dart';
 import 'package:animetrace/utils/launch_uri_util.dart';
 import 'package:animetrace/widgets/common_scaffold_body.dart';
@@ -82,32 +81,22 @@ class _ImagePathSettingState extends State<ImagePathSetting> {
                 ),
               ),
             ListTile(
-              title: const Text('本地笔记图片存放目录'),
-              subtitle: Text(ImageUtil.noteImageRootDirPath.isEmpty
-                  ? '单击选择目录'
-                  : ImageUtil.noteImageRootDirPath),
-              onTap: () async {
-                String selectImageRootDirPath = (await selectDirectory()) ?? "";
-                if (selectImageRootDirPath.isNotEmpty) {
-                  ImageUtil.setNoteImageRootDirPath(selectImageRootDirPath);
-                  setState(() {});
-                  Global.modifiedImgRootPath = true;
-                }
-              },
+              title: const Text('笔记图片存储位置'),
+              subtitle: Text(
+                '${ImageUtil.noteImageRootDirPath}\n'
+                '(应用私有目录，自动管理)',
+                maxLines: 3,
+              ),
+              isThreeLine: true,
             ),
             ListTile(
-              title: const Text('本地封面图片存放目录'),
-              subtitle: Text(ImageUtil.coverImageRootDirPath.isEmpty
-                  ? '单击选择目录'
-                  : ImageUtil.coverImageRootDirPath),
-              onTap: () async {
-                String selectImageRootDirPath = (await selectDirectory()) ?? "";
-                if (selectImageRootDirPath.isNotEmpty) {
-                  ImageUtil.setCoverImageRootDirPath(selectImageRootDirPath);
-                  setState(() {});
-                  Global.modifiedImgRootPath = true;
-                }
-              },
+              title: const Text('封面图片存储位置'),
+              subtitle: Text(
+                '${ImageUtil.coverImageRootDirPath}\n'
+                '(应用私有目录，自动管理)',
+                maxLines: 3,
+              ),
+              isThreeLine: true,
             ),
           ],
         ),

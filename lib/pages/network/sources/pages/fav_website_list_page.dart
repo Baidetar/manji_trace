@@ -83,7 +83,7 @@ class _FavWebsiteListPageState extends State<FavWebsiteListPage> {
                   const SizedBox(
                     height: 5,
                   ),
-                  Text(favWebsite.name, textScaleFactor: 0.8)
+                  Text(favWebsite.name, textScaler: const TextScaler.linear(0.8))
                 ],
               ),
             ),

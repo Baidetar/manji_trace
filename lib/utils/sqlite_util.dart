@@ -7,6 +7,7 @@ import 'package:animetrace/dao/episode_desc_dao.dart';
 import 'package:animetrace/dao/key_value_dao.dart';
 import 'package:animetrace/dao/label_dao.dart';
 import 'package:animetrace/dao/series_dao.dart';
+import 'package:animetrace/dao/journal_note_dao.dart';
 import 'package:animetrace/models/params/anime_sort_cond.dart';
 import 'package:animetrace/utils/episode.dart';
 import 'package:animetrace/utils/escape_util.dart';
@@ -15,6 +16,7 @@ import 'package:animetrace/models/anime.dart';
 import 'package:animetrace/models/episode.dart';
 import 'package:animetrace/utils/image_util.dart';
 import 'package:animetrace/utils/platform.dart';
+import 'package:animetrace/utils/sqlite_sync_util.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -41,6 +43,8 @@ class SqliteUtil {
     // 先创建表，再添加列
     await SqliteUtil.createTableEpisodeNote();
     await SqliteUtil.createTableImage();
+    // 创建独立笔记表
+    await JournalNoteDao.createTable();
     // 添加回顾号列
     await SqliteUtil.addColumnReviewNumberToHistoryAndNote();
     // 为动漫表添加列
@@ -76,6 +80,10 @@ class SqliteUtil {
     // 创建系列表、动漫系列表
     await SeriesDao.createTable();
     await AnimeSeriesDao.createTable();
+    
+    // 创建备份版本同步表
+    await SqliteSyncUtil.createSyncVersionTable(SqliteUtil.database);
+    
     return true;
   }
 

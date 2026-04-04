@@ -362,7 +362,7 @@ class _PickerWidget<T> extends StatefulWidget {
 
   @override
   PickerWidgetState createState() =>
-      PickerWidgetState<T>(picker: this.picker, themeData: this.themeData);
+      PickerWidgetState<T>(picker: picker, themeData: themeData);
 }
 
 class PickerWidgetState<T> extends State<_PickerWidget> {

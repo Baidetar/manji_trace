@@ -425,7 +425,7 @@ class _AnimeDetailAppBarState extends State<AnimeDetailAppBar> {
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: Text("${coverBgHeightRatio.toPrecision(2)}",
-                    textScaleFactor: 0.8),
+                    textScaler: const TextScaler.linear(0.8)),
               )
             ],
           ),

@@ -97,4 +97,29 @@ class ToastUtil {
       ),
     );
   }
+
+  static showError(String msg) {
+    BotToast.showCustomText(
+      onlyOne: true,
+      animationDuration: const Duration(milliseconds: 100),
+      animationReverseDuration: const Duration(milliseconds: 100),
+      toastBuilder: (cancelFunc) => Card(
+        elevation: 12,
+        shadowColor: Colors.red,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+          child: Text(
+            msg,
+            style: TextStyle(
+              fontFamily: 'invalid',
+              fontSize: 13,
+              color: Colors.red,
+              fontFamilyFallback: ThemeController.to.fontFamilyFallback,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

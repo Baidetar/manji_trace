@@ -13,9 +13,9 @@ showDialogSelectPlayStatus(
           children: PlayStatus.values
               .map((playStatus) => RadioListTile(
                     title: Text(playStatus.text),
-                    value: animeController.anime.getPlayStatus(),
-                    groupValue: playStatus,
-                    onChanged: (PlayStatus? value) {
+                    value: playStatus,
+                    groupValue: animeController.anime.getPlayStatus(), // ignore: deprecated_member_use
+                    onChanged: (PlayStatus? value) { // ignore: deprecated_member_use
                       animeController.anime.playStatus = playStatus.text;
                       animeController.updateAnimeInfo();
                       AnimeDao.updateAnimePlayStatusByAnimeId(
@@ -36,7 +36,7 @@ Future<PlayStatus?> showPlayStatusPicker(
       return SimpleDialog(
         title: const Text("播放状态"),
         children: PlayStatus.values
-            .map((e) => RadioListTile(
+            .map((e) => RadioListTile( // ignore: deprecated_member_use
                   title: Text(e.text),
                   value: e,
                   groupValue: playStatus,

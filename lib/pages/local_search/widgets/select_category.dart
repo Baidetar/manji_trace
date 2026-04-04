@@ -26,7 +26,7 @@ class _SelectCategoryViewState extends State<SelectCategoryView> {
           itemCount: AnimeCategory.values.length,
           itemBuilder: (context, index) {
             final category = AnimeCategory.values[index];
-            return RadioListTile<AnimeCategory>(
+            return RadioListTile<AnimeCategory>( // ignore: deprecated_member_use
                 title: Text(category.label),
                 toggleable: true,
                 value: category,

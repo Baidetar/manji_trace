@@ -7,6 +7,7 @@ import 'package:animetrace/pages/anime_collection/anime_list_page.dart';
 import 'package:animetrace/pages/history/history_page.dart';
 import 'package:animetrace/pages/network/explore_page.dart';
 import 'package:animetrace/pages/note_list/note_list_page.dart';
+import 'package:animetrace/pages/journal_note/journal_note_list_page.dart';
 import 'package:animetrace/pages/settings/settings_page.dart';
 import 'package:ming_cute_icons/ming_cute_icons.dart';
 
@@ -47,6 +48,15 @@ class MainScreenLogic extends GetxController {
     turnShow: () => MainScreenStyle.turnShowNoteTabInMainScreen(),
     canHide: true,
   );
+  var standaloneNoteTab = MainTab(
+    name: "日记",
+    icon: const Icon(MingCuteIcons.mgc_edit_3_line),
+    selectedIcon: const Icon(MingCuteIcons.mgc_edit_3_fill),
+    page: const JournalNoteListPage(),
+    show: true,
+    turnShow: () => true,
+    canHide: false,
+  );
   var seriesTab = MainTab(
     name: "系列",
     icon: const Icon(MingCuteIcons.mgc_book_3_line),
@@ -66,7 +76,7 @@ class MainScreenLogic extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    allTabs = [homeTab, exploreTab, historyTab, noteTab, seriesTab, moreTab];
+    allTabs = [homeTab, exploreTab, historyTab, noteTab, standaloneNoteTab, seriesTab, moreTab];
     loadTabs(first: true);
   }
 

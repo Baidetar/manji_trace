@@ -1,4 +1,5 @@
 import 'package:animetrace/utils/image_util.dart';
+import 'package:animetrace/models/relative_local_image.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../utils/sqlite_util.dart';
@@ -6,6 +7,22 @@ import 'package:animetrace/utils/log.dart';
 
 class ImageDao {
   static Database get database => SqliteUtil.database;
+
+  /// 获取笔记的相对本地图片列表
+  static Future<List<RelativeLocalImage>> getRelativeLocalImgsByNoteId(
+      int noteId) async {
+    var lm = await database.rawQuery('''
+    select image_id, image_local_path from image
+    where note_id = $noteId
+    order by order_idx, note_id;
+    ''');
+    List<RelativeLocalImage> relativeLocalImages = [];
+    for (var item in lm) {
+      relativeLocalImages.add(RelativeLocalImage(
+          item['image_id'] as int, item['image_local_path'] as String));
+    }
+    return relativeLocalImages;
+  }
 
   /// 编辑好笔记后，退出时更新图片的顺序
   static updateImageOrderIdxById(int imageId, int newOrderIdx) {

@@ -6,8 +6,11 @@ import 'package:animetrace/components/empty_data_hint.dart';
 import 'package:animetrace/animation/fade_animated_switcher.dart';
 import 'package:animetrace/dao/history_dao.dart';
 import 'package:animetrace/models/anime_history_record.dart';
+import 'package:animetrace/models/union_history_record.dart';
 import 'package:animetrace/pages/anime_detail/anime_detail.dart';
 import 'package:animetrace/pages/history/history_controller.dart';
+import 'package:animetrace/pages/journal_note/journal_note_controller.dart';
+import 'package:animetrace/pages/journal_note/widgets/journal_note_editor.dart';
 import 'package:animetrace/utils/log.dart';
 import 'package:animetrace/utils/sp_util.dart';
 import 'package:animetrace/utils/time_util.dart';
@@ -172,26 +175,26 @@ class __RecordListViewState extends State<_RecordListView>
                   mobile: ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: records.length,
-                    itemBuilder: (context, recordIndex) {
-                      final record = records[recordIndex];
-                      return _RecordItem(
-                          record: record, date: date, useCard: false);
-                    },
-                  ),
-                  desktop: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithMaxCrossAxisExtent(
-                            mainAxisExtent: 80, maxCrossAxisExtent: 320),
-                    itemCount: records.length,
-                    itemBuilder: (context, recordIndex) {
-                      final record = records[recordIndex];
-                      return _RecordItem(
-                          record: record, date: date, useCard: true);
-                    },
-                  ),
+                itemCount: records.length,
+                itemBuilder: (context, recordIndex) {
+                  final record = records[recordIndex];
+                  return _RecordItem(
+                      record: record, date: date, useCard: false);
+                },
+              ),
+              desktop: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate:
+                    const SliverGridDelegateWithMaxCrossAxisExtent(
+                        mainAxisExtent: 80, maxCrossAxisExtent: 320),
+                itemCount: records.length,
+                itemBuilder: (context, recordIndex) {
+                  final record = records[recordIndex];
+                  return _RecordItem(
+                      record: record, date: date, useCard: true);
+                },
+              ),
                 ),
                 // 避免最后一项太靠近卡片底部，因为标题没有紧靠顶部，所以会导致不美观
                 const SizedBox(height: 5)
@@ -205,7 +208,7 @@ class __RecordListViewState extends State<_RecordListView>
 }
 
 class _RecordItem extends StatefulWidget {
-  final AnimeHistoryRecord record;
+  final UnionHistoryRecord record;
   final String date;
   final bool useCard;
 
@@ -217,57 +220,136 @@ class _RecordItem extends StatefulWidget {
 }
 
 class _RecordItemState extends State<_RecordItem> {
-  AnimeHistoryRecord get record => widget.record;
+  UnionHistoryRecord get record => widget.record;
 
   @override
   Widget build(BuildContext context) {
+    // 根据类型渲染不同的UI
+    if (record.isAnime) {
+      return _buildAnimeItem(context);
+    } else {
+      return _buildNoteItem(context);
+    }
+  }
+
+  // 动画历史项目
+  Widget _buildAnimeItem(BuildContext context) {
+    final animeRecord = record.animeRecord!;
     if (widget.useCard) {
       return Card(
         margin: const EdgeInsets.symmetric(horizontal: 8),
         child: Center(
-          child: _buildItem(context),
+          child: _buildAnimeItemContent(context, animeRecord),
         ),
       );
     }
-    return _buildItem(context);
+    return _buildAnimeItemContent(context, animeRecord);
   }
 
-  InkWell _buildItem(BuildContext context) {
+  InkWell _buildAnimeItemContent(
+      BuildContext context, AnimeHistoryRecord animeRecord) {
     return InkWell(
       borderRadius:
           widget.useCard ? BorderRadius.circular(AppTheme.cardRadius) : null,
       onTap: () {
         Navigator.of(context).push(MaterialPageRoute(
           builder: (context) {
-            return AnimeDetailPage(record.anime);
+            return AnimeDetailPage(animeRecord.anime);
           },
         )).then((value) async {
           final newRecord =
               await HistoryDao.getRecordByAnimeIdAndReviewNumberAndDate(
-                  record.anime, record.reviewNumber, widget.date);
-          record.assign(newRecord);
+                  animeRecord.anime, animeRecord.reviewNumber, widget.date);
+          animeRecord.assign(newRecord);
           setState(() {});
         });
       },
       child: ListTile(
         leading: AnimeListCover(
-          record.anime,
-          reviewNumber: record.reviewNumber,
+          animeRecord.anime,
+          reviewNumber: animeRecord.reviewNumber,
           showReviewNumber: true,
         ),
         subtitle: Text(
-          (record.startEpisodeNumber == record.endEpisodeNumber
-              ? record.startEpisodeNumber.toString()
-              : "${record.startEpisodeNumber}~${record.endEpisodeNumber}"),
+          (animeRecord.startEpisodeNumber == animeRecord.endEpisodeNumber
+              ? animeRecord.startEpisodeNumber.toString()
+              : "${animeRecord.startEpisodeNumber}~${animeRecord.endEpisodeNumber}"),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         title: Text(
-          record.anime.animeName,
-          // textScaleFactor: AppTheme.smallScaleFactor,
+          animeRecord.anime.animeName,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        // subtitle: Text(updateRecordVo.anime.getAnimeSource()),
+      ),
+    );
+  }
+
+  // 日记项目
+  Widget _buildNoteItem(BuildContext context) {
+    final note = record.noteRecord!;
+    if (widget.useCard) {
+      return Card(
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        child: Center(
+          child: _buildNoteItemContent(context, note),
+        ),
+      );
+    }
+    return _buildNoteItemContent(context, note);
+  }
+
+  InkWell _buildNoteItemContent(BuildContext context, final note) {
+    return InkWell(
+      borderRadius:
+          widget.useCard ? BorderRadius.circular(AppTheme.cardRadius) : null,
+      onTap: () {
+        Get.to(() => JournalNoteEditor(
+          note: note,
+          onSave: (title, content) async {
+            note.title = title;
+            note.content = content;
+            await Get.find<JournalNoteController>().updateNote(note);
+            setState(() {});
+          },
+        ));
+      },
+      child: ListTile(
+        leading: Icon(
+          Icons.note,
+          color: Theme.of(context).primaryColor,
+          size: 32,
+        ),
+        title: Text(
+          note.title.isEmpty ? '未命名笔记' : note.title,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (note.content.isNotEmpty)
+              Text(
+                note.content,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                ),
+              ),
+            if (note.relativeLocalImages.isNotEmpty)
+              Text(
+                '${note.relativeLocalImages.length} 张图片',
+                style: TextStyle(
+                  color: Colors.grey[500],
+                  fontSize: 11,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

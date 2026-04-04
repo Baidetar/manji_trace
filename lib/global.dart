@@ -13,6 +13,7 @@ import 'package:animetrace/controllers/remote_controller.dart';
 import 'package:animetrace/controllers/update_record_controller.dart';
 import 'package:animetrace/pages/anime_collection/checklist_controller.dart';
 import 'package:animetrace/utils/dio_util.dart';
+import 'package:animetrace/utils/image_util.dart';
 import 'package:animetrace/utils/platform.dart';
 import 'package:animetrace/utils/sp_profile.dart';
 import 'package:animetrace/utils/sp_util.dart';
@@ -31,7 +32,7 @@ class Global {
   static bool get isRelease => const bool.fromEnvironment("dart.vm.product");
 
   /// 设备预览
-  static bool get enableDevicePreview => false;
+  static bool get enableDevicePreview => true;
 
   /// 修改了笔记图片根路径
   static bool modifiedImgRootPath = false;
@@ -50,6 +51,8 @@ class Global {
     // MediaKit.ensureInitialized();
     // 获取SharedPreferences
     await SPUtil.getInstance();
+    // 初始化图片私有目录
+    await ImageUtil.initializePrivateDirs();
     // 桌面应用的sqflite初始化
     sqfliteFfiInit();
     // 网络

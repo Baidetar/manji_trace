@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:animetrace/global.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
@@ -8,7 +10,6 @@ import 'package:animetrace/controllers/theme_controller.dart';
 import 'package:animetrace/dao/image_dao.dart';
 import 'package:animetrace/models/note.dart';
 import 'package:animetrace/models/relative_local_image.dart';
-import 'package:animetrace/pages/settings/image_path_setting.dart';
 import 'package:animetrace/utils/extensions/color.dart';
 import 'package:animetrace/utils/image_util.dart';
 import 'package:animetrace/utils/sqlite_util.dart';
@@ -19,6 +20,7 @@ import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 import 'package:animetrace/utils/log.dart';
 import 'package:animetrace/dao/note_dao.dart';
 import 'package:animetrace/widgets/responsive.dart';
+import 'package:path/path.dart' as p;
 
 import '../../utils/time_util.dart';
 
@@ -151,7 +153,11 @@ class _NoteEditPageState extends State<NoteEditPage> {
     return DropTarget(
       onDragDone: (detail) async {
         for (var file in detail.files) {
-          await _addImage(file.path);
+          // 复制图片到私有目录并获取相对路径
+          String? relativePath = await _copyImageAndGetPath(file.path);
+          if (relativePath != null && relativePath.isNotEmpty) {
+            await _addImage(relativePath);
+          }
         }
         if (mounted) setState(() {});
       },
@@ -336,53 +342,72 @@ class _NoteEditPageState extends State<NoteEditPage> {
   }
 
   _pickLocalImages() async {
-    if (!ImageUtil.hasNoteImageRootDirPath()) {
-      ToastUtil.showText("请先设置图片根目录");
-      Navigator.of(context).push(
-        // MaterialPageRoute(
-        //   builder: (BuildContext context) =>
-        //       const NoteSetting(),
-        // ),
-        MaterialPageRoute(
-          builder: (context) {
-            return const ImagePathSetting();
-          },
-        ),
+    // 批量选择图片（使用新的私有目录方案）
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
+        allowMultiple: true,
       );
-      return;
+      
+      if (result == null || result.files.isEmpty) return;
+      
+      List<PlatformFile> platformFiles = result.files;
+      for (var platformFile in platformFiles) {
+        String absoluteImagePath = platformFile.path ?? "";
+        // 复制图片到私有目录并获取相对路径
+        String? relativePath = await _copyImageAndGetPath(absoluteImagePath);
+        if (relativePath != null && relativePath.isNotEmpty) {
+          await _addImage(relativePath);
+        }
+      }
+      
+      setState(() {});
+    } catch (e) {
+      AppLog.error("选择图片出错: $e");
+      ToastUtil.showText("选择图片失败");
     }
-
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
-      allowMultiple: true,
-    );
-    if (result == null) return;
-    List<PlatformFile> platformFiles = result.files;
-    for (var platformFile in platformFiles) {
-      String absoluteImagePath = platformFile.path ?? "";
-      await _addImage(absoluteImagePath);
-    }
-
-    setState(() {});
   }
 
-  Future<void> _addImage(String absoluteImagePath) async {
-    if (absoluteImagePath.isEmpty) return;
+  /// 复制图片到私有目录并返回相对路径
+  Future<String?> _copyImageAndGetPath(String absolutePath) async {
+    try {
+      // 使用file_picker_util的辅助方法
+      final File sourceFile = File(absolutePath);
+      if (!await sourceFile.exists()) {
+        AppLog.error("源图片文件不存在：$absolutePath");
+        return null;
+      }
 
-    String relativeImagePath =
-        ImageUtil.getRelativeNoteImagePath(absoluteImagePath);
-    int imageId = await SqliteUtil.insertNoteIdAndImageLocalPath(widget.note.id,
-        relativeImagePath, widget.note.relativeLocalImages.length);
+      // 获取目标目录
+      final targetDirPath = ImageUtil.getNoteImageRootDirPath();
+      
+      // 生成唯一的文件名（使用时间戳）
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final originalName = p.basename(absolutePath);
+      final fileName = '${timestamp}_$originalName';
+      final targetPath = p.join(targetDirPath, fileName);
+
+      // 复制文件
+      await sourceFile.copy(targetPath);
+      AppLog.info("图片已复制到私有目录：$targetPath");
+
+      // 返回相对路径
+      final relativePath = ImageUtil.getRelativeNoteImagePath(targetPath);
+      return relativePath;
+    } catch (e) {
+      AppLog.error("复制图片失败：$e");
+      return null;
+    }
+  }
+
+  Future<void> _addImage(String relativeImagePath) async {
+    if (relativeImagePath.isEmpty) return;
+
+    int imageId = await SqliteUtil.insertNoteIdAndImageLocalPath(
+        widget.note.id, relativeImagePath, widget.note.relativeLocalImages.length);
     widget.note.relativeLocalImages
         .add(RelativeLocalImage(imageId, relativeImagePath));
-    // 排序结果：null,0,1,2,3...
-    // 1.如果添加新图片时没有为新图片设置下标，
-    //   1.如果其他图片都为null，该图片会被排序到最后面，正常。
-    //   2.如果其他图片都有下标，那么该图片就会排序到最前面，错误。需要重新修改所有，也就是标记changeOrderIdx为true
-    // 2.如果添加新图片时为新图片设置下标，
-    //   1.其他图片都为都为null，那么会排序到最后面，正常
-    //   2.如果其他图片都有下标，正常
   }
 
   _dialogRemoveImage(int index) {

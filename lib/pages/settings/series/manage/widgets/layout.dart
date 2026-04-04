@@ -92,7 +92,7 @@ class _SeriesManageLayoutStateSettingPage
               ),
               Align(
                 alignment: AlignmentDirectional.centerEnd,
-                child: Text("${coverHeight.toInt()}", textScaleFactor: 0.8),
+                child: Text("${coverHeight.toInt()}", textScaler: const TextScaler.linear(0.8)),
               )
             ],
           ),

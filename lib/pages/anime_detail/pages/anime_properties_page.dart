@@ -192,7 +192,7 @@ class AnimePropertiesPage extends StatelessWidget {
         ),
         children: AnimeCategory.values
             .map((e) => e.label)
-            .map((e) => RadioListTile(
+            .map((e) => RadioListTile( // ignore: deprecated_member_use
                   title: Text(e),
                   value: e,
                   groupValue: anime.category,
@@ -217,7 +217,7 @@ class AnimePropertiesPage extends StatelessWidget {
         title: const Text("地区"),
         children: AnimeArea.values
             .map((e) => e.label)
-            .map((e) => RadioListTile(
+            .map((e) => RadioListTile( // ignore: deprecated_member_use
                   title: Text(e),
                   value: e,
                   groupValue: anime.area,

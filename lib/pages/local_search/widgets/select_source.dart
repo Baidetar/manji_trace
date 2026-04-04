@@ -33,7 +33,7 @@ class _SelectSourceViewState extends State<SelectSourceView> {
           itemBuilder: (context, index) {
             final website = websites[index];
 
-            return RadioListTile<ClimbWebsite>(
+            return RadioListTile<ClimbWebsite>( // ignore: deprecated_member_use
                 title: Text(website.name),
                 toggleable: true,
                 controlAffinity: ListTileControlAffinity.leading,

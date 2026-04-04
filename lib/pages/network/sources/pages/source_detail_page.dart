@@ -269,7 +269,7 @@ class _SourceDetailState extends State<SourceDetail> {
       builder: (context) => SimpleDialog(
         title: const Text('搜索类型'),
         children: BangumiSearchCategory.values
-            .map((e) => RadioListTile(
+            .map((e) => RadioListTile( // ignore: deprecated_member_use
                 title: Text(e.label),
                 groupValue: categoryKey,
                 value: e.key,

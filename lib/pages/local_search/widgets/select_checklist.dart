@@ -28,7 +28,7 @@ class _SelectChecklistViewState extends State<SelectChecklistView> {
           itemCount: checklistController.tags.length,
           itemBuilder: (context, index) {
             final checklist = checklistController.tags[index];
-            return RadioListTile(
+            return RadioListTile( // ignore: deprecated_member_use
                 title: Text(checklist),
                 toggleable: true,
                 value: checklist,

@@ -26,7 +26,7 @@ class _SelectPlayStatusViewState extends State<SelectPlayStatusView> {
           itemCount: PlayStatus.values.length,
           itemBuilder: (context, index) {
             final playStatus = PlayStatus.values[index];
-            return RadioListTile<PlayStatus>(
+            return RadioListTile<PlayStatus>( // ignore: deprecated_member_use
                 title: Text(playStatus.text),
                 toggleable: true,
                 value: playStatus,

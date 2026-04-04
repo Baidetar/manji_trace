@@ -273,7 +273,7 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
           for (int i = 0; i < BackupMode.values.length; ++i)
             BackupMode.values[i] == BackupMode.close
                 ? const SizedBox()
-                : RadioListTile(
+                : RadioListTile( // ignore: deprecated_member_use
                     title: Text(BackupMode.values[i].title),
                     value: BackupMode.values[i].name,
                     groupValue: backupService.curRemoteBackupModeName,
