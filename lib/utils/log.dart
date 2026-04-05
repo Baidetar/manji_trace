@@ -50,13 +50,7 @@ class AppLog {
     if (Platform.isWindows) {
       WindowsUtil.locateFile(file.path);
     } else {
-      // TODO: 使用 SharePlus 分享文件
-      // SharePlus.instance.share(file.path).then((_) => file.delete());
-      // SharePlus.instance.share()
-      SharePlus.instance
-          .share(ShareParams(files: [XFile(file.path)]))
-          .then((_) => file.delete());
-      await file.delete();
+      await Share.shareXFiles([XFile(file.path)], text: '漫迹日志');
     }
   }
 }
