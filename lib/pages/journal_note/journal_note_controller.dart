@@ -50,13 +50,15 @@ class JournalNoteController extends GetxController {
     }
   }
 
-  Future<void> createNote(JournalNote note) async {
+  Future<void> createNote(JournalNote note, {bool silent = false}) async {
     try {
       final id = await JournalNoteDao.insertNote(note);
       note.id = id;
-      noteList.insert(0, note);
-      update();
-      ToastUtil.showText('笔记已创建');
+      if (!silent) {
+        noteList.insert(0, note);
+        update();
+        ToastUtil.showText('笔记已创建');
+      }
 
       // 通知历史页面有新日记
       try {
@@ -67,7 +69,7 @@ class JournalNoteController extends GetxController {
       }
     } catch (e) {
       AppLog.error('创建笔记失败: $e');
-      ToastUtil.showError('创建笔记失败');
+      if (!silent) ToastUtil.showError('创建笔记失败');
     }
   }
 

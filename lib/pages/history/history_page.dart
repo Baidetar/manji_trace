@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'package:manji_trace/components/anime_list_cover.dart';
 import 'package:manji_trace/components/empty_data_hint.dart';
+import 'package:manji_trace/components/common_image.dart';
 import 'package:manji_trace/animation/fade_animated_switcher.dart';
 import 'package:manji_trace/dao/history_dao.dart';
 import 'package:manji_trace/models/anime_history_record.dart';
@@ -300,9 +301,11 @@ class _RecordItemState extends State<_RecordItem> {
   }
 
   InkWell _buildNoteItemContent(BuildContext context, final note) {
+    final hasImages = note.relativeLocalImages.isNotEmpty;
+
     return InkWell(
       borderRadius:
-          widget.useCard ? BorderRadius.circular(AppTheme.cardRadius) : null,
+          widget.useCard ? BorderRadius.circular(AppTheme.cardRadius) : BorderRadius.circular(12),
       onTap: () {
         Get.to(() => JournalNoteEditor(
           note: note,
@@ -311,42 +314,94 @@ class _RecordItemState extends State<_RecordItem> {
             note.content = content;
             note.createTime = createTime;
             await Get.find<JournalNoteController>().updateNote(note);
+            // 通知 HistoryController 刷新单条记录，保持 UI 同步
+            Get.find<HistoryController>().onNoteUpdated(note);
             setState(() {});
           },
         ));
       },
-      child: ListTile(
-        leading: Icon(
-          Icons.note,
-          color: Theme.of(context).primaryColor,
-          size: 32,
-        ),
-        title: Text(
-          note.title.isEmpty ? '未命名笔记' : note.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (note.content.isNotEmpty)
-              Text(
-                note.content,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
+            // 统一图标风格：使用与编辑器一致的 book_outlined，并增加轻量背景
+            if (!hasImages)
+              Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.book_outlined,
+                    size: 24,
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
-            if (note.relativeLocalImages.isNotEmpty)
-              Text(
-                '${note.relativeLocalImages.length} 张图片',
-                style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 11,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    note.title.isEmpty ? '未命名笔记' : note.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    note.content.isEmpty ? "无内容" : note.content,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                  ),
+                  if (hasImages)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.image_outlined,
+                            size: 11,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${note.relativeLocalImages.length} 张图片',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  fontSize: 10,
+                                  color: Theme.of(context).colorScheme.outline,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (hasImages)
+              Padding(
+                padding: const EdgeInsets.only(left: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: SizedBox(
+                    width: 52, // 历史页面项通常较窄，稍微缩小图片尺寸
+                    height: 52,
+                    child: CommonImage(
+                      note.relativeLocalImages.first.path,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
               ),
           ],
