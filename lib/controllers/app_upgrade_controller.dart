@@ -37,7 +37,7 @@ class AppUpgradeController extends GetxController {
   String get downloadPercnetStr => "${(downloadPercent * 100).toInt()}%";
   CancelToken? releaseCancelToken;
 
-  String get curVersion => packageInfo.version;
+  String get curVersion => "${packageInfo.version}+${packageInfo.buildNumber}";
   String get latestVersion {
     String tagName = latestRelease?.tagName ?? '';
     if (tagName.startsWith('v')) {
@@ -56,7 +56,7 @@ class AppUpgradeController extends GetxController {
       AppLog.info("Windows exe path: ${Platform.resolvedExecutable}");
     }
     packageInfo = await PackageInfo.fromPlatform();
-    getLatestVersion(autoCheck: true);
+    // getLatestVersion(autoCheck: true); // 禁用二改自用时的自动更新检查
     super.onInit();
   }
 

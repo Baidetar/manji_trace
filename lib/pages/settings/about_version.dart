@@ -43,23 +43,23 @@ class _AboutVersionState extends State<AboutVersion> {
                 _buildWebsiteIconsRow(context),
               ],
             ),
-            GetBuilder<AppUpgradeController>(
-              init: AppUpgradeController.to,
-              initState: (_) {},
-              builder: (appUpgradeLogic) {
-                return ListTile(
-                  onTap: () =>
-                      appUpgradeLogic.getLatestVersion(showToast: true),
-                  title: const Text("检查更新"),
-                  trailing: appUpgradeLogic.status == LoadStatus.loading
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2.4))
-                      : null,
-                );
-              },
-            ),
+            // GetBuilder<AppUpgradeController>(
+            //   init: AppUpgradeController.to,
+            //   initState: (_) {},
+            //   builder: (appUpgradeLogic) {
+            //     return ListTile(
+            //       onTap: () =>
+            //           appUpgradeLogic.getLatestVersion(showToast: true),
+            //       title: const Text("检查更新"),
+            //       trailing: appUpgradeLogic.status == LoadStatus.loading
+            //           ? const SizedBox(
+            //               height: 18,
+            //               width: 18,
+            //               child: CircularProgressIndicator(strokeWidth: 2.4))
+            //           : null,
+            //     );
+            //   },
+            // ),
             ListTile(
                 title: const Text("更新日志"),
                 onTap: () {
