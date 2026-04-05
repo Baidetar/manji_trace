@@ -306,9 +306,10 @@ class _RecordItemState extends State<_RecordItem> {
       onTap: () {
         Get.to(() => JournalNoteEditor(
           note: note,
-          onSave: (title, content) async {
+          onSave: (title, content, createTime) async {
             note.title = title;
             note.content = content;
+            note.createTime = createTime;
             await Get.find<JournalNoteController>().updateNote(note);
             setState(() {});
           },

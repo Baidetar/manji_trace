@@ -31,15 +31,19 @@ class WebDavUtil {
     // Set the public request headers
     client.setHeaders({'accept-charset': 'utf-8'});
 
+    // 读取用户设置的超时时间，默认30秒
+    int timeout = SPUtil.getInt("webdav_timeout", defaultValue: 30000);
+
     // Set the connection server timeout time in milliseconds.
-    client.setConnectTimeout(8000);
+    client.setConnectTimeout(timeout);
 
     // Set send data timeout time in milliseconds.
-    client.setSendTimeout(8000);
+    client.setSendTimeout(timeout);
 
     // Set transfer data time in milliseconds.
-    client.setReceiveTimeout(8000);
-    AppLog.info("WebDav初始化成功！");
+    client.setReceiveTimeout(timeout);
+    
+    AppLog.info("WebDav初始化成功！超时时间：${timeout}ms");
     return true;
   }
 

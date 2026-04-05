@@ -34,6 +34,8 @@ class RemoteBackupPage extends StatefulWidget {
 class _RemoteBackupPageState extends State<RemoteBackupPage> {
   int autoBackupWebDavNumber =
       SPUtil.getInt("autoBackupWebDavNumber", defaultValue: 20);
+  int webdavTimeout =
+      SPUtil.getInt("webdav_timeout", defaultValue: 30000);
   bool canManualBackup = true;
 
   BackupService get backupService => BackupService.to;
@@ -127,6 +129,12 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
                 },
               ),
               _buildAutoBackupPrompt(),
+              ListTile(
+                title: const Text("连接超时"),
+                subtitle: Text("当前超时时间: ${webdavTimeout ~/ 1000}s"),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _handleSelectWebDavTimeout,
+              ),
             ],
           ),
           if (!widget.fromHome)
@@ -186,6 +194,50 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
       autoBackupWebDavNumber = number;
       SPUtil.setInt("autoBackupWebDavNumber", number);
       setState(() {});
+    }
+  }
+
+  void _handleSelectWebDavTimeout() async {
+    final Map<int, String> options = {
+      8000: "8秒 (原默认)",
+      15000: "15秒",
+      30000: "30秒 (推荐)",
+      60000: "60秒",
+      120000: "120秒",
+    };
+
+    int? selected = await showDialog<int>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text("设置超时时间"),
+        children: options.entries.map((e) {
+          return RadioListTile<int>(
+            title: Text(e.value),
+            value: e.key,
+            groupValue: webdavTimeout,
+            onChanged: (value) {
+              Navigator.pop(context, value);
+            },
+          );
+        }).toList(),
+      ),
+    );
+
+    if (selected != null && selected != webdavTimeout) {
+      setState(() {
+        webdavTimeout = selected;
+      });
+      SPUtil.setInt("webdav_timeout", selected);
+      ToastUtil.showText("超时时间已设置为 ${selected ~/ 1000}s，下次连接生效");
+
+      // 尝试重新初始化以立即应用设置
+      if (RemoteController.to.isOnline) {
+        WebDavUtil.initWebDav(
+          SPUtil.getString("webdav_uri"),
+          SPUtil.getString("webdav_user"),
+          SPUtil.getString("webdav_password"),
+        );
+      }
     }
   }
 

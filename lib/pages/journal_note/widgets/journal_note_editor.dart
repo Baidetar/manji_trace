@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:manji_trace/models/journal_note.dart';
 import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/utils/time_util.dart';
 import 'package:manji_trace/utils/toast_util.dart';
 import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
@@ -15,9 +16,11 @@ import 'package:manji_trace/widgets/responsive.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:path/path.dart' as p;
 
+import '../../../widgets/picker/date_time_picker.dart';
+
 class JournalNoteEditor extends StatefulWidget {
   final JournalNote? note;
-  final Function(String title, String content) onSave;
+  final Function(String title, String content, String createTime) onSave;
 
   const JournalNoteEditor({
     Key? key,
@@ -32,6 +35,7 @@ class JournalNoteEditor extends StatefulWidget {
 class _JournalNoteEditorState extends State<JournalNoteEditor> {
   late TextEditingController _titleController;
   late TextEditingController _contentController;
+  late String _createTime;
   bool _hasChanges = false;
   bool changeOrderIdx = false;
 
@@ -40,6 +44,7 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
     super.initState();
     _titleController = TextEditingController(text: widget.note?.title ?? "");
     _contentController = TextEditingController(text: widget.note?.content ?? "");
+    _createTime = widget.note?.createTime ?? TimeUtil.getDateTimeNowStr();
 
     _titleController.addListener(_onChanged);
     _contentController.addListener(_onChanged);
@@ -64,7 +69,7 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
       return;
     }
 
-    widget.onSave(_titleController.text, _contentController.text);
+    widget.onSave(_titleController.text, _contentController.text, _createTime);
   }
 
   bool _dragging = false;
@@ -152,6 +157,7 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
         body: _buildImageDroppable(
           child: ListView(
             children: [
+              _buildTimeField(),
               _buildTitleField(),
               _buildContentField(),
               Responsive(
@@ -165,6 +171,39 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
         ),
       ),
     );
+  }
+
+  Widget _buildTimeField() {
+    return ListTile(
+      leading: const Icon(Icons.access_time, size: 20),
+      title: Text(
+        TimeUtil.getHumanReadableDateTimeStr(_createTime),
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: const Icon(Icons.edit_calendar_outlined, size: 20),
+      dense: true,
+      onTap: _showEditTimePicker,
+    );
+  }
+
+  _showEditTimePicker() async {
+    DateTime? initialDate = DateTime.tryParse(_createTime);
+    initialDate ??= DateTime.now();
+
+    DateTime? selectedDate = await showCommonDateTimePicker(
+      context: context,
+      initialValue: initialDate,
+    );
+
+    if (selectedDate != null) {
+      setState(() {
+        _createTime = selectedDate.toString().substring(0, 19);
+        _hasChanges = true;
+      });
+    }
   }
 
   Widget _buildTitleField() {
@@ -236,6 +275,7 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
           widget.note!.relativeLocalImages.insert(newIndex, element);
         });
         changeOrderIdx = true;
+        _hasChanges = true;
       },
       dragWidgetBuilder: (int index, Widget child) => Material(
         color: Colors.transparent,
@@ -310,7 +350,9 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
         }
       }
 
-      setState(() {});
+      setState(() {
+        _hasChanges = true;
+      });
     } catch (e) {
       AppLog.error("选择图片出错: $e");
       ToastUtil.showText("选择图片失败");
@@ -380,7 +422,9 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
                 SqliteUtil.deleteLocalImageByImageId(relativeLocalImage.imageId);
                 widget.note!.relativeLocalImages.removeWhere((element) =>
                     element.imageId == relativeLocalImage.imageId);
-                setState(() {});
+                setState(() {
+                  _hasChanges = true;
+                });
                 Navigator.of(context).pop();
               },
             ),

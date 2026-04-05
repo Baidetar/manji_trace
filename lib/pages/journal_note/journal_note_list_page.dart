@@ -115,7 +115,7 @@ class _JournalNoteListPageState extends State<JournalNoteListPage> {
             ),
             const SizedBox(height: 4),
             Text(
-              TimeUtil.getHumanReadableDateTimeStr(note.updateTime),
+              TimeUtil.getHumanReadableDateTimeStr(note.createTime),
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 12,
@@ -143,10 +143,11 @@ class _JournalNoteListPageState extends State<JournalNoteListPage> {
 
   void _createNewNote() {
     Get.to(() => JournalNoteEditor(
-      onSave: (title, content) async {
+      onSave: (title, content, createTime) async {
         final note = JournalNote(
           title: title,
           content: content,
+          createTime: createTime,
           relativeLocalImages: [], // 新笔记没有图片
         );
         await controller.createNote(note);
@@ -158,9 +159,10 @@ class _JournalNoteListPageState extends State<JournalNoteListPage> {
   void _editNote(JournalNote note) {
     Get.to(() => JournalNoteEditor(
       note: note,
-      onSave: (title, content) async {
+      onSave: (title, content, createTime) async {
         note.title = title;
         note.content = content;
+        note.createTime = createTime;
         await controller.updateNote(note);
         Get.back();
       },

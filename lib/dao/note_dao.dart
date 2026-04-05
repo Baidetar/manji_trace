@@ -144,6 +144,15 @@ class NoteDao {
     ''');
   }
 
+  static updateNoteCreateTimeByNoteId(int noteId, String createTime) async {
+    AppLog.info("sql: updateNoteCreateTimeByNoteId($noteId, $createTime)");
+    database.rawUpdate('''
+    update episode_note
+    set create_time = '$createTime', update_time = '${TimeUtil.getDateTimeNowStr()}'
+    where note_id = $noteId;
+    ''');
+  }
+
   static Future<bool> existNoteId(int noteId) async {
     var list = await database.rawQuery('''
     select note_id from episode_note

@@ -23,6 +23,7 @@ import 'package:manji_trace/widgets/responsive.dart';
 import 'package:path/path.dart' as p;
 
 import '../../utils/time_util.dart';
+import '../../widgets/picker/date_time_picker.dart';
 
 class NoteEditPage extends StatefulWidget {
   final Note note;
@@ -36,6 +37,7 @@ class NoteEditPage extends StatefulWidget {
 class _NoteEditPageState extends State<NoteEditPage> {
   bool _loadOk = false;
   bool _updateNoteContent = false; // 如果文本内容发生变化，返回时会更新数据库
+  bool _updateNoteCreateTime = false; // 如果时间发生变化，返回时会更新数据库
   var noteContentController = TextEditingController();
   bool changeOrderIdx = false;
 
@@ -122,6 +124,10 @@ class _NoteEditPageState extends State<NoteEditPage> {
       NoteDao.updateNoteContentByNoteId(
           widget.note.id, widget.note.noteContent);
     }
+    if (_updateNoteCreateTime) {
+      NoteDao.updateNoteCreateTimeByNoteId(
+          widget.note.id, widget.note.createTime);
+    }
   }
 
   @override
@@ -203,6 +209,10 @@ class _NoteEditPageState extends State<NoteEditPage> {
   }
 
   ListTile _buildAnimeInfo() {
+    String timeStr = widget.note.episode.number == 0
+        ? TimeUtil.getHumanReadableDateTimeStr(widget.note.createTime)
+        : "${widget.note.episode.caption} ${widget.note.episode.getDate()}";
+
     return ListTile(
       style: ListTileStyle.drawer,
       leading: AnimeListCover(widget.note.anime),
@@ -212,15 +222,40 @@ class _NoteEditPageState extends State<NoteEditPage> {
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontWeight: FontWeight.w600),
       ),
-      subtitle: Text(
-        widget.note.episode.number == 0
-            ? TimeUtil.getHumanReadableDateTimeStr(widget.note.createTime)
-            : "${widget.note.episode.caption} ${widget.note.episode.getDate()}",
-        style: Theme.of(context).textTheme.bodySmall,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
+      subtitle: InkWell(
+        onTap: () => _showEditTimePicker(),
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Text(
+            timeStr,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  decoration: TextDecoration.underline,
+                ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ),
     );
+  }
+
+  _showEditTimePicker() async {
+    DateTime? initialDate = DateTime.tryParse(widget.note.createTime);
+    initialDate ??= DateTime.now();
+
+    DateTime? selectedDate = await showCommonDateTimePicker(
+      context: context,
+      initialValue: initialDate,
+    );
+
+    if (selectedDate != null) {
+      setState(() {
+        widget.note.createTime = selectedDate.toString().substring(0, 19);
+        _updateNoteCreateTime = true;
+      });
+    }
   }
 
   _showNoteContent() {

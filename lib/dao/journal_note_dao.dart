@@ -72,7 +72,7 @@ class JournalNoteDao {
     final rows = await database.query(
       'journal_note',
       where: where,
-      orderBy: 'update_time desc',
+      orderBy: 'create_time desc',
       limit: pageParams.pageSize,
       offset: pageParams.getOffset(),
     );
@@ -94,7 +94,7 @@ class JournalNoteDao {
     }
 
     List<Map<String, Object?>> list = await database.rawQuery(
-      'select count(*) cnt from standalone_note ${whereClause.isEmpty ? "" : whereClause}',
+      'select count(*) cnt from journal_note ${whereClause.isEmpty ? "" : whereClause}',
     );
     return list[0]["cnt"] as int;
   }
@@ -119,12 +119,13 @@ class JournalNoteDao {
   static Future<int> insertNote(JournalNote note) async {
     AppLog.info("sql: insertNote");
     String now = TimeUtil.getDateTimeNowStr();
+    String createTime = note.createTime.isEmpty ? now : note.createTime;
     int noteId = await database.insert(
       'journal_note',
       {
         'title': note.title,
         'content': note.content,
-        'create_time': now,
+        'create_time': createTime,
         'update_time': now,
       },
     );
@@ -140,6 +141,7 @@ class JournalNoteDao {
       {
         'title': note.title,
         'content': note.content,
+        'create_time': note.createTime,
         'update_time': now,
       },
       where: 'id = ?',
