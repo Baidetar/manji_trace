@@ -1,14 +1,14 @@
-import 'package:manji_trace/utils/log.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:manji_trace/controllers/app_upgrade_controller.dart';
-import 'package:manji_trace/modules/load_status/status.dart';
 import 'package:manji_trace/pages/changelog/view.dart';
 import 'package:manji_trace/utils/launch_uri_util.dart';
+import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/values/values.dart';
 import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:manji_trace/widgets/rotated_logo.dart';
 import 'package:manji_trace/widgets/svg_asset_icon.dart';
-import 'package:get/get.dart';
+import 'package:manji_trace/modules/load_status/status.dart';
 
 class AboutVersion extends StatefulWidget {
   const AboutVersion({Key? key}) : super(key: key);
@@ -43,23 +43,6 @@ class _AboutVersionState extends State<AboutVersion> {
                 _buildWebsiteIconsRow(context),
               ],
             ),
-            // GetBuilder<AppUpgradeController>(
-            //   init: AppUpgradeController.to,
-            //   initState: (_) {},
-            //   builder: (appUpgradeLogic) {
-            //     return ListTile(
-            //       onTap: () =>
-            //           appUpgradeLogic.getLatestVersion(showToast: true),
-            //       title: const Text("检查更新"),
-            //       trailing: appUpgradeLogic.status == LoadStatus.loading
-            //           ? const SizedBox(
-            //               height: 18,
-            //               width: 18,
-            //               child: CircularProgressIndicator(strokeWidth: 2.4))
-            //           : null,
-            //     );
-            //   },
-            // ),
             ListTile(
                 title: const Text("更新日志"),
                 onTap: () {
@@ -69,26 +52,6 @@ class _AboutVersionState extends State<AboutVersion> {
                           builder: (context) => const ChangelogPage()));
                 }),
             const ListTile(title: Text("导出日志"), onTap: AppLog.share),
-            // ListTile(
-            //     title: const Text("下载地址"),
-            //     subtitle: const Text("密码：eocv"),
-            //     trailing: const Icon(Icons.open_in_new_rounded),
-            //     onTap: () {
-            //       LaunchUrlUtil.launch(
-            //           context: context,
-            //           uriStr: "https://wwc.lanzouw.com/b01uyqcrg?password=eocv",
-            //           inApp: false);
-            //     }),
-            // ListTile(
-            //     title: const Text("QQ 交流群"),
-            //     subtitle: const Text("414226908"),
-            //     trailing: const Icon(Icons.open_in_new_rounded),
-            //     onTap: () {
-            //       LaunchUrlUtil.launch(
-            //           context: context,
-            //           uriStr: "https://jq.qq.com/?_wv=1027&k=qOpUIx7x",
-            //           inApp: false);
-            //     }),
           ],
         ),
       ],
@@ -113,19 +76,6 @@ class _AboutVersionState extends State<AboutVersion> {
                 : Colors.black,
           ),
         ),
-        // IconButton(
-        //   splashRadius: 20,
-        //   onPressed: () {
-        //     LaunchUrlUtil.launch(
-        //         context: context,
-        //         uriStr: "https://gitee.com/linyi517/anime_trace",
-        //         inApp: false);
-        //   },
-        //   icon: SvgAssetIcon(
-        //     assetPath: Assets.icons.gitee,
-        //     color: const Color.fromRGBO(187, 33, 36, 1),
-        //   ),
-        // )
       ],
     );
   }

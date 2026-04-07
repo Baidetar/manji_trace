@@ -7,7 +7,7 @@ import 'package:manji_trace/controllers/update_record_controller.dart';
 import 'package:manji_trace/dao/history_dao.dart';
 import 'package:manji_trace/dao/label_dao.dart';
 import 'package:manji_trace/models/params/result.dart';
-import 'package:manji_trace/models/sync_version_model.dart';
+import 'package:manji_trace/models/sync_version.dart';
 import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
 import 'package:manji_trace/pages/network/sources/pages/dedup/dedup_controller.dart';
 import 'package:manji_trace/utils/sp_util.dart';

@@ -178,7 +178,7 @@ class AnimePropertiesPage extends StatelessWidget {
   _showDialogEditCategory(BuildContext context) {
     return showDialog(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (context) => AlertDialog( // Use AlertDialog for better structure
         title: Row(
           children: [
             const Text("类别"),
@@ -190,22 +190,25 @@ class AnimePropertiesPage extends StatelessWidget {
                 icon: const Icon(Icons.help_outline))
           ],
         ),
-        children: AnimeCategory.values
-            .map((e) => e.label)
-            .map((e) => RadioListTile( // ignore: deprecated_member_use
-                  title: Text(e),
-                  value: e,
-                  groupValue: anime.category,
-                  onChanged: (value) {
-                    if (value == null) return;
-
-                    Navigator.pop(context);
-                    anime.category = value;
-                    animeController.updateAnimeInfo();
-                    AnimeDao.updateCategory(anime.animeId, value);
-                  },
-                ))
-            .toList(),
+        content: Column( // Use Column for radio buttons
+          mainAxisSize: MainAxisSize.min,
+          children: AnimeCategory.values.map((e) => e.label).map((label) {
+            return RadioListTile<String>( // Use String for value type if labels are strings
+              title: Text(label),
+              value: label,
+              groupValue: anime.category,
+              onChanged: (value) {
+                if (value != null) {
+                  // Update the local state and controller
+                  anime.category = value;
+                  animeController.updateAnimeInfo();
+                  AnimeDao.updateCategory(anime.animeId, value);
+                  Navigator.pop(context); // Close dialog
+                }
+              },
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -213,24 +216,27 @@ class AnimePropertiesPage extends StatelessWidget {
   _showDialogEditArea(BuildContext context) {
     return showDialog(
       context: context,
-      builder: (context) => SimpleDialog(
+      builder: (context) => AlertDialog( // Use AlertDialog for better structure
         title: const Text("地区"),
-        children: AnimeArea.values
-            .map((e) => e.label)
-            .map((e) => RadioListTile( // ignore: deprecated_member_use
-                  title: Text(e),
-                  value: e,
-                  groupValue: anime.area,
-                  onChanged: (value) {
-                    if (value == null) return;
-
-                    Navigator.pop(context);
-                    anime.area = value;
-                    animeController.updateAnimeInfo();
-                    AnimeDao.updateArea(anime.animeId, value);
-                  },
-                ))
-            .toList(),
+        content: Column( // Use Column for radio buttons
+          mainAxisSize: MainAxisSize.min,
+          children: AnimeArea.values.map((e) => e.label).map((label) {
+            return RadioListTile<String>( // Use String for value type if labels are strings
+              title: Text(label),
+              value: label,
+              groupValue: anime.area,
+              onChanged: (value) {
+                if (value != null) {
+                  // Update the local state and controller
+                  anime.area = value;
+                  animeController.updateAnimeInfo();
+                  AnimeDao.updateArea(anime.animeId, value);
+                  Navigator.pop(context); // Close dialog
+                }
+              },
+            );
+          }).toList(),
+        ),
       ),
     );
   }

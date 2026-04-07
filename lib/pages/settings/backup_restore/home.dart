@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:manji_trace/pages/settings/backup_restore/local.dart';
 import 'package:manji_trace/pages/settings/backup_restore/remote.dart';
 import 'package:manji_trace/pages/settings/pages/rbr_page.dart';
@@ -6,6 +7,7 @@ import 'package:manji_trace/routes/get_route.dart';
 import 'package:manji_trace/utils/backup_util.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/utils/toast_util.dart';
+import 'package:manji_trace/controllers/sync_service.dart';
 import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:manji_trace/widgets/setting_card.dart';
 
@@ -27,6 +29,7 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
         children: [
           const LocalBackupPage(),
           const RemoteBackupPage(),
+          _buildSyncCard(),
           SettingCard(
             title: '数据迁移',
             children: [
@@ -42,6 +45,49 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
         ],
       )),
     );
+  }
+
+  Widget _buildSyncCard() {
+    return GetBuilder<SyncService>(builder: (syncService) {
+      String syncTimeStr = syncService.lastLocalSyncTime == 0
+          ? "从未同步"
+          : DateTime.fromMillisecondsSinceEpoch(syncService.lastLocalSyncTime)
+              .toString()
+              .substring(0, 19);
+
+      return SettingCard(
+        title: '多设备同步 (WebDAV)',
+        children: [
+          SwitchListTile(
+            title: const Text("启动时自动同步"),
+            subtitle: const Text("开启后，每次启动应用都会自动检测云端最新数据并覆盖本地"),
+            value: syncService.enableAutoSync,
+            onChanged: (val) {
+              setState(() {
+                syncService.enableAutoSync = val;
+              });
+            },
+          ),
+          ListTile(
+            title: const Text("立即同步"),
+            subtitle: Text("上次同步: $syncTimeStr"),
+            trailing: syncService.isSyncing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.sync),
+            onTap: syncService.isSyncing
+                ? null
+                : () async {
+                    await syncService.syncData();
+                    setState(() {});
+                  },
+          ),
+        ],
+      );
+    });
   }
 
   ListTile _buildMigrateOldImagesTile() {

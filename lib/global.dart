@@ -12,6 +12,7 @@ import 'package:manji_trace/controllers/labels_controller.dart';
 import 'package:manji_trace/controllers/remote_controller.dart';
 import 'package:manji_trace/controllers/update_record_controller.dart';
 import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
+import 'package:manji_trace/controllers/sync_service.dart';
 import 'package:manji_trace/utils/dio_util.dart';
 import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/platform.dart';
@@ -21,12 +22,17 @@ import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:get/get.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:uuid/uuid.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:window_manager/window_manager.dart';
 import 'values/values.dart';
 
 class Global {
   // 私有构造器，避免外部错误使用(也就是创建Global对象)
   Global._();
+
+  static late String deviceId;
+  static late String deviceName;
 
   /// 是否 release
   static bool get isRelease => const bool.fromEnvironment("dart.vm.product");
@@ -51,6 +57,10 @@ class Global {
     // MediaKit.ensureInitialized();
     // 获取SharedPreferences
     await SPUtil.getInstance();
+    
+    // 初始化设备信息
+    await _initDeviceInfo();
+
     // 初始化图片私有目录
     await ImageUtil.initializePrivateDirs();
     // 桌面应用的sqflite初始化
@@ -69,8 +79,38 @@ class Global {
     if (Platform.isWindows) await hotKeyManager.unregisterAll();
   }
 
+  static Future<void> _initDeviceInfo() async {
+    deviceId = SPUtil.getString("sync_device_id");
+    if (deviceId.isEmpty) {
+      deviceId = const Uuid().v4();
+      SPUtil.setString("sync_device_id", deviceId);
+    }
+
+    deviceName = SPUtil.getString("sync_device_name");
+    if (deviceName.isEmpty) {
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        deviceName = androidInfo.model;
+      } else if (Platform.isIOS) {
+        IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+        deviceName = iosInfo.name;
+      } else if (Platform.isWindows) {
+        WindowsDeviceInfo windowsInfo = await deviceInfo.windowsInfo;
+        deviceName = windowsInfo.computerName;
+      } else if (Platform.isMacOS) {
+        MacOsDeviceInfo macInfo = await deviceInfo.macOsInfo;
+        deviceName = macInfo.computerName;
+      } else {
+        deviceName = "Unknown Device";
+      }
+      SPUtil.setString("sync_device_name", deviceName);
+    }
+  }
+
   static _putGetController() async {
     Get.lazyPut(() => BackupService());
+    Get.lazyPut(() => SyncService());
     Get.lazyPut(() => AnimeService());
     Get.lazyPut(() => SettingService());
 

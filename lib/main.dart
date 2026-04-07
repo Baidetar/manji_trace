@@ -12,6 +12,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:bot_toast/bot_toast.dart';
 import 'package:manji_trace/components/classic_refresh_style.dart';
 import 'package:manji_trace/controllers/backup_service.dart';
+import 'package:manji_trace/controllers/sync_service.dart';
 import 'package:manji_trace/global.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/controllers/theme_controller.dart';
@@ -60,6 +61,8 @@ class _WindowWrapperState extends State<WindowWrapper> with WindowListener {
 
     // 还原最新备份、开启间隔备份
     BackupService.to.startService();
+    // 启动自动同步检查
+    SyncService.to.checkAndSyncOnStart();
   }
 
   @override

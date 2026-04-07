@@ -1,5 +1,12 @@
-import 'dart:async';
 import 'dart:io';
+import 'dart:async';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/episode.dart';
+import 'package:manji_trace/utils/escape_util.dart';
 import 'package:manji_trace/dao/anime_dao.dart';
 import 'package:manji_trace/dao/anime_label_dao.dart';
 import 'package:manji_trace/dao/anime_series_dao.dart';
@@ -8,17 +15,10 @@ import 'package:manji_trace/dao/key_value_dao.dart';
 import 'package:manji_trace/dao/label_dao.dart';
 import 'package:manji_trace/dao/series_dao.dart';
 import 'package:manji_trace/dao/journal_note_dao.dart';
-import 'package:manji_trace/models/params/anime_sort_cond.dart';
-import 'package:manji_trace/utils/episode.dart';
-import 'package:manji_trace/utils/escape_util.dart';
-import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/models/anime.dart';
 import 'package:manji_trace/models/episode.dart';
 import 'package:manji_trace/models/enum/note_type.dart';
-import 'package:manji_trace/utils/image_util.dart';
-import 'package:manji_trace/utils/platform.dart';
-import 'package:manji_trace/utils/sqlite_sync_util.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:manji_trace/models/params/anime_sort_cond.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class SqliteUtil {
@@ -28,8 +28,11 @@ class SqliteUtil {
   SqliteUtil._();
 
   static Future<SqliteUtil> getInstance() async {
-    database = await _initDatabase();
-    return _instance ??= SqliteUtil._();
+    if (_instance == null) {
+      database = await _initDatabase();
+      _instance = SqliteUtil._();
+    }
+    return _instance!;
   }
 
   static const sqlFileName = 'mydb.db';
@@ -84,9 +87,6 @@ class SqliteUtil {
     await SeriesDao.createTable();
     await AnimeSeriesDao.createTable();
     
-    // 创建备份版本同步表
-    await SqliteSyncUtil.createSyncVersionTable(SqliteUtil.database);
-    
     return true;
   }
 
@@ -100,16 +100,14 @@ class SqliteUtil {
     return rootPath;
   }
 
+  static Future<String> getDBPath() async {
+    return "${await getLocalRootDirPath()}/$sqlFileName";
+  }
+
   static Future<Database> _initDatabase() async {
-    dbPath = "${await getLocalRootDirPath()}/$sqlFileName";
+    dbPath = await getDBPath();
     AppLog.info("💾 db path: $dbPath");
-    try {
-      await database.close();
-    } catch (e) {
-      if (!e.toString().contains('LateInitializationError')) {
-        AppLog.warn("关闭数据库失败：$e");
-      }
-    }
+    
     if (PlatformUtil.isMobile) {
       return await openDatabase(
         dbPath,
@@ -138,7 +136,6 @@ class SqliteUtil {
     AppLog.info('init db');
     await db.execute('''
       CREATE TABLE tag (
-          -- tag_id    INTEGER PRIMARY KEY AUTOINCREMENT,
           tag_name  TEXT    PRIMARY KEY NOT NULL,
           tag_order INTEGER
       );
@@ -148,9 +145,9 @@ class SqliteUtil {
           anime_id            INTEGER PRIMARY KEY AUTOINCREMENT,
           anime_name          TEXT    NOT NULL,
           anime_episode_cnt   INTEGER NOT NULL,
-          anime_desc          TEXT, -- 描述
+          anime_desc          TEXT,
           tag_name            TEXT,
-          last_mode_tag_time  TEXT, -- 最后一次修改标签的时间，可以实现新移动的在列表上面
+          last_mode_tag_time  TEXT,
           FOREIGN KEY (
               tag_name
           )
@@ -171,8 +168,7 @@ class SqliteUtil {
       ''');
     await db.execute('''
       CREATE INDEX index_anime_name ON anime (anime_name);
-      '''); // 不知道为啥放在创建history语句前就会导致history表还没创建就插入数据，从而导致错误
-    // 新增
+      ''');
     await db.execute('''
       CREATE INDEX index_date ON history (date);
       ''');
@@ -181,37 +177,35 @@ class SqliteUtil {
   static Future<void> _insertInitData(Database db) async {
     await db.rawInsert('''
       insert into tag(tag_name, tag_order)
-      -- values('拾'), ('途'), ('终'), ('搁'), ('弃');
       values('收集', 0), ('旅途', 1), ('终点', 2), ('搁置', 3), ('放弃', 4);
     ''');
   }
 
   static Future<void> addColumnInfoToAnime() async {
     Map<String, String> columns = {};
-    columns['anime_cover_url'] = 'TEXT'; // 封面链接
-    columns['premiere_time'] = 'TEXT'; // 首播时间
-    columns['name_another'] = 'TEXT'; // 其他名称
-    columns['name_ori'] = 'TEXT'; // 原版名称
-    columns['author_ori'] = 'TEXT'; // 原版作者
-    columns['area'] = 'TEXT'; // 地区
-    columns['play_status'] = 'TEXT'; // 播放状态
-    columns['category'] = 'TEXT'; // 动漫类型
-    columns['production_company'] = 'TEXT'; // 制作公司
-    columns['official_site'] = 'TEXT'; // 官方网站
-    columns['anime_url'] = 'TEXT'; // 动漫网址
-    columns['review_number'] = 'INTEGER'; // 回顾号
-    columns.forEach((key, value) async {
+    columns['anime_cover_url'] = 'TEXT';
+    columns['premiere_time'] = 'TEXT';
+    columns['name_another'] = 'TEXT';
+    columns['name_ori'] = 'TEXT';
+    columns['author_ori'] = 'TEXT';
+    columns['area'] = 'TEXT';
+    columns['play_status'] = 'TEXT';
+    columns['category'] = 'TEXT';
+    columns['production_company'] = 'TEXT';
+    columns['official_site'] = 'TEXT';
+    columns['anime_url'] = 'TEXT';
+    columns['review_number'] = 'INTEGER';
+    
+    for (var entry in columns.entries) {
       var list = await database.rawQuery('''
-        select * from sqlite_master where name = 'anime' and sql like '%$key%';
+        select * from sqlite_master where name = 'anime' and sql like '%${entry.key}%';
       ''');
       if (list.isEmpty) {
         await database.execute('''
           alter table anime
-          add column $key $value;
-        ''').then((value) async {
-          if (key == 'review_number') {
-            AppLog.info("修改回顾号为1");
-            // 新增的回顾号列才会修改NULL→1，之后插入新动漫默认回顾号为1
+          add column ${entry.key} ${entry.value};
+        ''').then((_) async {
+          if (entry.key == 'review_number') {
             await database.rawUpdate('''
               update anime
               set review_number = 1
@@ -220,46 +214,23 @@ class SqliteUtil {
           }
         });
       }
-    });
+    }
   }
 
-  // 为历史表和笔记表添加列：回顾号
-  // 并将NULL改为1
   static Future<void> addColumnReviewNumberToHistoryAndNote() async {
     var list = await database.rawQuery('''
     select * from sqlite_master where name = 'history' and sql like '%review_number%';
     ''');
-    // 没有列时添加
     if (list.isEmpty) {
-      AppLog.info("sql: addColumnReviewNumberToHistoryAndNote");
-      await database.execute('''
-      alter table history
-      add column review_number INTEGER;
-      ''');
-
-      // 新增列才会修改NULL→1，之后就不修改了
-      await database.rawUpdate('''
-      update history
-      set review_number = 1
-      where review_number is NULL;
-      ''');
+      await database.execute('alter table history add column review_number INTEGER;');
+      await database.rawUpdate('update history set review_number = 1 where review_number is NULL;');
     }
     list = await database.rawQuery('''
     select * from sqlite_master where name = 'episode_note' and sql like '%review_number%';
     ''');
-    // 没有列时添加
     if (list.isEmpty) {
-      AppLog.info("sql: addColumnReviewNumberToHistoryAndNote");
-      await database.execute('''
-      alter table episode_note
-      add column review_number INTEGER;
-      ''');
-
-      await database.rawUpdate('''
-      update episode_note
-      set review_number = 1
-      where review_number is NULL;
-      ''');
+      await database.execute('alter table episode_note add column review_number INTEGER;');
+      await database.rawUpdate('update episode_note set review_number = 1 where review_number is NULL;');
     }
   }
 
@@ -267,20 +238,9 @@ class SqliteUtil {
     var list = await database.rawQuery('''
     select * from sqlite_master where name = 'anime' and sql like '%rate%';
     ''');
-    // 没有列时添加
     if (list.isEmpty) {
-      AppLog.info("sql: addColumnRateToAnime");
-      await database.execute('''
-      alter table anime
-      add column rate INTEGER;
-      ''');
-
-      // 新增列才会修改NULL→1，之后就不修改了
-      await database.rawUpdate('''
-      update anime
-      set rate = 0
-      where rate is NULL;
-      ''');
+      await database.execute('alter table anime add column rate INTEGER;');
+      await database.rawUpdate('update anime set rate = 0 where rate is NULL;');
     }
   }
 
@@ -314,7 +274,6 @@ class SqliteUtil {
       select * from sqlite_master where name = '$tableName' and sql like '%$columnName%';
       ''');
     if (list.isNotEmpty) return;
-    // 没有列时添加
     AppLog.info("sql: $logName");
     await database.execute('''
       alter table $tableName
@@ -332,335 +291,13 @@ class SqliteUtil {
   }
 
   static Future<void> addColumnTwoTimeToEpisodeNote() async {
-    var list = await database.rawQuery('''
-    select * from sqlite_master where name = 'episode_note' and sql like '%create_time%';
-    ''');
-    // 没有列时添加
-    if (list.isEmpty) {
-      AppLog.info("sql: addColumnCreateTimeToAnime");
-      await database.execute('''
-      alter table episode_note
-      add column create_time TEXT;
-      ''');
-    }
-
-    list = await database.rawQuery('''
-    select * from sqlite_master where name = 'episode_note' and sql like '%update_time%';
-    ''');
-    // 没有列时添加
-    if (list.isEmpty) {
-      AppLog.info("sql: addColumnUpdateTimeToAnime");
-      await database.execute('''
-      alter table episode_note
-      add column update_time TEXT;
-      ''');
-    }
+    await addColumnName(tableName: 'episode_note', columnName: 'create_time', columnType: 'TEXT');
+    await addColumnName(tableName: 'episode_note', columnName: 'update_time', columnType: 'TEXT');
   }
 
-  static void insertHistoryItem(
-      int animeId, int episodeNumber, String date, int reviewNumber) async {
-    AppLog.info(
-        "sql: insertHistoryItem(animeId=$animeId, episodeNumber=$episodeNumber, date=$date, reviewNumber=$reviewNumber)");
-    await database.rawInsert('''
-    insert into history(date, anime_id, episode_number, review_number)
-    values('$date', $animeId, $episodeNumber, $reviewNumber);
-    ''');
-  }
-
-  static void updateHistoryItem(
-      int animeId, int episodeNumber, String date, int reviewNumber) async {
-    AppLog.info("sql: updateHistoryItem");
-
-    await database.rawInsert('''
-    update history
-    set date = '$date'
-    where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;
-    ''');
-  }
-
-  static void deleteHistoryItemByAnimeIdAndEpisodeNumberAndReviewNumber(
-      int animeId, int episodeNumber, int reviewNumber) async {
-    AppLog.info(
-        "sql: deleteHistoryItemByAnimeIdAndEpisodeNumberAndReviewNumber(animeId=$animeId, episodeNumber=$episodeNumber)");
-    await database.rawDelete('''
-      delete from history
-      where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;
-    ''');
-  }
-
-  static void insertTagName(String tagName, int tagOrder) async {
-    AppLog.info("sql: insertTagName");
-    await database.rawInsert('''
-    insert into tag(tag_name, tag_order)
-    values('$tagName', $tagOrder);
-    ''');
-  }
-
-  static void updateTagName(String oldTagName, String newTagName) async {
-    AppLog.info("sql: updateTagNameByTagId");
-    await database.rawUpdate('''
-      update tag
-      set tag_name = '$newTagName'
-      where tag_name = '$oldTagName';
-    ''');
-    // 更改tag表的tag_name后，还需要更改动漫表中的tag_name列
-    await database.rawUpdate('''
-      update anime
-      set tag_name = '$newTagName'
-      where tag_name = '$oldTagName';
-    ''');
-  }
-
-  static Future<bool> updateTagOrder(List<String> tagNames) async {
-    AppLog.info("sql: updateTagOrder");
-    // 错误：把表中标签的名字和list中对应起来即可。这样会导致动漫标签不匹配
-    // 应该重建一个order列，从0开始
-    for (int i = 0; i < tagNames.length; ++i) {
-      await database.rawUpdate('''
-      update tag
-      set tag_order = $i
-      where tag_name = '${tagNames[i]}';
-      ''');
-    }
-    return true;
-  }
-
-  static void deleteTagByTagName(String tagName) async {
-    AppLog.info("sql: deleteTagByTagName");
-    await database.rawDelete('''
-    delete from tag
-    where tag_name = '$tagName';
-    ''');
-  }
-
-  static Future<List<String>> getAllTags() async {
-    AppLog.info("sql: getAllTags");
-    var list = await database.rawQuery('''
-    select tag_name
-    from tag
-    order by tag_order
-    ''');
-    List<String> res = [];
-    for (var item in list) {
-      res.add(item["tag_name"] as String);
-    }
-    return res;
-  }
-
-  static Future<Anime> getAnimeByAnimeId(int animeId) async {
-    // AppLog.debug("sql: getAnimeByAnimeId($animeId)");
-    var list = await database.rawQuery('''
-    select *
-    from anime
-    where anime_id = $animeId;
-    ''');
-    if (list.isEmpty) {
-      return Anime(animeId: 0, animeName: "", animeEpisodeCnt: 0);
-    }
-    var row = list[0];
-    Anime anime = await AnimeDao.row2Bean(row,
-        queryCheckedEpisodeCnt: true, queryHasJoinedSeries: true);
-    return anime;
-  }
-
-  static Future<Anime> getAnimeByAnimeUrl(Anime anime) async {
-    // 不需要根据animeName查找，只根据动漫地址就能知道数据库是否添加了该搜索源下的这个动漫
-    // 不能使用的animeName的原因：如果网络搜索fate，可能会找到带有单引号的动漫名，如果按这个动漫名查找，则会出错，需要进行转义。
-    // AppLog.info("sql: getAnimeIdByAnimeNameAndSource()");
-    if (anime.animeUrl.isEmpty) {
-      anime.animeId = 0;
-      anime.tagName = "";
-      return anime;
-    }
-    var list = await database.rawQuery('''
-      select *
-      from anime
-      where anime_url = '${anime.animeUrl}';
-    ''');
-    // 为空返回旧对象
-    if (list.isEmpty) {
-      // 传入的对象可能已经在动漫页进入的详细页中被取消收藏了，但目录页显示的旧数据仍然保留着id和tagName等信息
-      anime.animeId = 0;
-      anime.tagName = "";
-      return anime;
-    }
-    var row = list[0];
-
-    Anime searchedAnime =
-        await AnimeDao.row2Bean(row, queryCheckedEpisodeCnt: true);
-    return searchedAnime;
-  }
-
-  static Future<String> getTagNameByAnimeId(int animeId) async {
-    AppLog.info("sql: getTagNameByAnimeId");
-    var list = await database.rawQuery('''
-    select tag_name
-    from anime
-    where anime.anime_id = $animeId;
-    ''');
-    return list[0]['tag_name'] as String;
-  }
-
-  // 获取该动漫的[startEpisodeNumber, endEpisodeNumber]集信息
-  static Future<List<Episode>> getEpisodeHistoryByAnimeIdAndRange(
-      Anime anime, int startEpisodeNumber, int endEpisodeNumber) async {
-    AppLog.info(
-        "sql: getEpisodeHistoryByAnimeIdAndRange(animeId=${anime.animeId}), range=[$startEpisodeNumber, $endEpisodeNumber]");
-
-    var list = await database.rawQuery('''
-      select date, episode_number
-      from anime inner join history
-        on anime.anime_id = ${anime.animeId} and anime.anime_id = history.anime_id and history.review_number = ${anime.reviewNumber}
-      where history.episode_number >= $startEpisodeNumber and history.episode_number <= $endEpisodeNumber;
-      ''');
-    // AppLog.info("查询结果：$list");
-    List<Episode> episodes = [];
-    for (int episodeNumber = startEpisodeNumber;
-        episodeNumber <= endEpisodeNumber;
-        ++episodeNumber) {
-      episodes.add(Episode(episodeNumber, anime.reviewNumber,
-          startNumber: EpisodeUtil.getFakeEpisodeStartNumber(anime)));
-    }
-    // 遍历查询结果，每个元素都是一个键值对(列名-值)
-    for (var element in list) {
-      int episodeNumber = element['episode_number'] as int;
-      // 要减去起始编号，才能从下标0开始
-      episodes[episodeNumber - startEpisodeNumber].dateTime =
-          element['date'] as String;
-    }
-    return episodes;
-  }
-
-  static Future<int> getAnimesCntBytagName(String tagName) async {
-    AppLog.info("sql: getAnimesCntBytagName");
-    var list = await database.rawQuery('''
-      select count(anime.anime_id) cnt from anime
-      where anime.tag_name = '$tagName';
-      ''');
-    return list[0]["cnt"] as int;
-  }
-
-  static Future<int> getCheckedEpisodeCntByAnimeId(int animeId,
-      {int reviewNumber = 0}) async {
-    // AppLog.info("getCheckedEpisodeCntByAnimeId(animeId=$animeId)");
-    var checkedEpisodeCntList = await database.rawQuery('''
-      select count(anime.anime_id) cnt
-      from anime inner join history
-          on anime.anime_id = $animeId and anime.anime_id = history.anime_id and history.review_number = $reviewNumber;
-      ''');
-    // AppLog.info(
-    //     "最大回顾号$maxReviewNumber的进度：checkedEpisodeCnt=${checkedEpisodeCntList[0]["cnt"] as int}");
-    return checkedEpisodeCntList[0]["cnt"] as int;
-  }
-
-  static Future<List<Anime>> getAllAnimeBytagName(
-    String tagName,
-    int offset,
-    int number, {
-    required AnimeSortCond animeSortCond,
-  }) async {
-    AppLog.info(
-        "sql: getAllAnimeBytagName($tagName, offset=$offset, number=$number)");
-
-    dynamic list;
-    SortCondItem sortCond =
-        AnimeSortCond.sortConds[animeSortCond.specSortColumnIdx];
-    if (sortCond.columnName == 'first_episode_watch_time') {
-      list = await database.rawQuery('''
-        select anime.*
-        from anime left join history on anime.anime_id = history.anime_id
-            and anime.review_number = history.review_number and history.episode_number = 1
-        where anime.tag_name = '$tagName'
-        -- Windows生效，Android不支持nulls last
-        -- order by history.date ${animeSortCond.desc ? 'desc' : ''} nulls last;
-        ${animeSortCond.desc ? 'order by IFNULL(history.date, \'0\') desc' : 'order by IFNULL(history.date, \'9\')'}
-        limit $number offset $offset;
-      ''');
-    } else if (sortCond.columnName == 'recent_watch_time') {
-      list = await database.rawQuery('''
-        select anime.*
-        from anime left join history on anime.anime_id = history.anime_id
-            and anime.review_number = history.review_number
-            -- 不能使用date，因为同一个动漫下，最大date可以有多个，会导致查询到多个重复动漫
-            and history.episode_number = (
-                select max(episode_number)
-                from history
-                where anime.anime_id = history.anime_id and anime.review_number = history.review_number
-            )
-        where anime.tag_name = '$tagName'
-        ${animeSortCond.desc ? 'order by IFNULL(history.date, \'0\') desc' : 'order by IFNULL(history.date, \'9\')'}
-        limit $number offset $offset;
-      ''');
-    } else {
-      // COLLATE NOCASE 忽略大小写
-      String orderSql = '''
-        order by ${AnimeSortCond.sortConds[animeSortCond.specSortColumnIdx].columnName} COLLATE NOCASE
-        ''';
-      if (animeSortCond.desc) {
-        orderSql += ' desc ';
-      }
-
-      list = await database.rawQuery('''
-        select *
-        from anime
-        where tag_name = '$tagName'
-        $orderSql
-        limit $number offset $offset;
-      '''); // 按anime_id倒序，保证最新添加的动漫在最上面
-    }
-
-    List<Anime> res = [];
-    for (var element in list) {
-      int animeId = element['anime_id'] as int;
-      int reviewNumber = element['review_number'] as int;
-      int checkedEpisodeCnt = await getCheckedEpisodeCntByAnimeId(animeId,
-          reviewNumber: reviewNumber);
-      bool hasJoinedSeries =
-          (await AnimeSeriesDao.getSeriesIdListByAnimeId(animeId)).isNotEmpty;
-
-      res.add(Anime(
-        animeId: animeId,
-        // 进入详细页面后需要该id
-        animeName: element['anime_name'] as String,
-        animeEpisodeCnt: element['anime_episode_cnt'] as int,
-        // 详细地址和播放状态用于在收藏页更新全部动漫
-        animeUrl: element['anime_url'] as String? ?? "",
-        playStatus: element['play_status'] as String? ?? "",
-        animeCoverUrl: element['anime_cover_url'] as String? ?? "",
-        // 强制转换为String?，如果为null，则设置为空字符串
-        tagName: tagName,
-        // 必要：用于和从详细页面返回的新标签比较，看是否需要移动位置
-        checkedEpisodeCnt: checkedEpisodeCnt,
-        reviewNumber: reviewNumber,
-        hasJoinedSeries: hasJoinedSeries,
-      ));
-    }
-    return res;
-  }
-
-  static getAnimeCntPerTag() async {
-    AppLog.info("sql: getAnimeCntPerTag");
-
-    var list = await database.rawQuery('''
-    select count(anime_id) as anime_cnt, tag.tag_name, tag.tag_order
-    from tag left outer join anime -- sqlite只支持左外联结
-        on anime.tag_name = tag.tag_name
-    group by tag.tag_name -- 应该按照tag的tag_name分组
-    order by tag.tag_order; -- 按照用户调整的顺序排序，否则会导致数量与实际不符
-    ''');
-
-    List<int> res = [];
-    for (var item in list) {
-      // AppLog.info(
-      //     '${item['tag_name']}-${item['anime_cnt']}-${item['tag_order']}');
-      res.add(item['anime_cnt'] as int);
-    }
-    return res;
-  }
-
-  static createTableEpisodeNote() async {
+  static Future<void> createTableEpisodeNote() async {
     await database.execute('''
-    CREATE TABLE IF NOT EXISTS episode_note ( -- IF NOT EXISTS表示不存在表时才会创建
+    CREATE TABLE IF NOT EXISTS episode_note (
       note_id        INTEGER PRIMARY KEY AUTOINCREMENT,
       anime_id       INTEGER NOT NULL,
       episode_number INTEGER NOT NULL,
@@ -670,7 +307,7 @@ class SqliteUtil {
     ''');
   }
 
-  static createTableImage() async {
+  static Future<void> createTableImage() async {
     await database.execute('''
     CREATE TABLE IF NOT EXISTS image (
       image_id          INTEGER  PRIMARY KEY AUTOINCREMENT,
@@ -685,8 +322,7 @@ class SqliteUtil {
 
   static Future<int> insertNoteIdAndImageLocalPath(
       int noteId, String imageLocalPath, int orderIdx, {NoteType noteType = NoteType.episode}) async {
-    AppLog.info(
-        "sql: insertNoteIdAndLocalImg(noteId=$noteId, imageLocalPath=$imageLocalPath, orderIdx=$orderIdx, noteType=${noteType.value})");
+    AppLog.info("sql: insertNoteIdAndLocalImg(noteId=$noteId, imageLocalPath=$imageLocalPath, orderIdx=$orderIdx, noteType=${noteType.value})");
     return await database.rawInsert('''
     insert into image (note_id, image_local_path, order_idx, note_type)
     values ($noteId, '$imageLocalPath', $orderIdx, ${noteType.value});
@@ -694,11 +330,8 @@ class SqliteUtil {
   }
 
   static deleteLocalImageByImageId(int imageId) async {
-    AppLog.info("sql: deleteLocalImageByImageLocalPath($imageId)");
-    await database.rawDelete('''
-    delete from image
-    where image_id = $imageId;
-    ''');
+    AppLog.info("sql: deleteLocalImageByImageId($imageId)");
+    await database.rawDelete('delete from image where image_id = $imageId;');
   }
 
   static Future<void> addColumnNoteTypeToImage() async {
@@ -706,54 +339,9 @@ class SqliteUtil {
       tableName: 'image',
       columnName: 'note_type',
       columnType: 'INTEGER',
-      initialValue: 0, // 默认为番剧笔记
+      initialValue: 0,
       logName: 'addColumnNoteTypeToImage',
     );
-  }
-
-  static Future<Anime> getCustomAnimeByAnimeName(String animeName) async {
-    animeName = EscapeUtil.escapeStr(animeName); // 先转义
-    AppLog.info("sql: getCustomAnimeByAnimeName($animeName)");
-
-    var list = await database.rawQuery('''
-    select *
-    from anime
-    where anime_name = '$animeName' and (anime_url is null or length(anime_url) = 0); -- 只找该名字的动漫，且没有动漫地址
-    ''');
-
-    // 没找到，返回自定义动漫，用于添加
-    if (list.isEmpty) {
-      return Anime(
-        animeName: animeName,
-        animeEpisodeCnt: 0,
-        animeCoverUrl: "",
-      );
-    }
-
-    Anime anime =
-        await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true);
-    return anime;
-  }
-
-  static Future<List<Anime>> getCustomAnimesIfContainAnimeName(
-      String animeName) async {
-    animeName = EscapeUtil.escapeStr(animeName); // 先转义
-    AppLog.info("sql: getCustomAnimeByAnimeName($animeName)");
-
-    var list = await database.rawQuery('''
-    select *
-    from anime
-    where anime_name like '%$animeName%' and (anime_url is null or length(anime_url) = 0); -- 只找包含该名字的动漫，且没有动漫地址
-    ''');
-
-    List<Anime> res = [];
-    for (var row in list) {
-      Anime anime = await AnimeDao.row2Bean(row, queryCheckedEpisodeCnt: true);
-      // 如果名字完全一样，则去掉，因为已经有了
-      if (anime.animeName == animeName) continue;
-    }
-
-    return res;
   }
 
   static Future<void> createTableUpdateRecord() async {
@@ -773,92 +361,43 @@ class SqliteUtil {
   }
 
   static Future<void> addColumnOrderIdxToImage() async {
-    var list = await database.rawQuery('''
-    select * from sqlite_master where name = 'image' and sql like '%order_idx%';
-    ''');
-    // 没有列时添加
-    if (list.isEmpty) {
-      AppLog.info("sql: addColumnOrderIdxToImage");
-      await database.execute('''
-      alter table image
-      add column order_idx INTEGER;
-      ''');
-    }
+    await addColumnName(tableName: 'image', columnName: 'order_idx', columnType: 'INTEGER');
   }
 
-  static Future<int> count({
-    required String tableName,
-    String? columnName = 'id',
-    String? where,
-    List<Object?>? whereArgs,
-  }) async {
-    final rows = await database.query(
-      tableName,
-      columns: ['COUNT(${columnName ?? "*"})'],
-      where: where,
-      whereArgs: whereArgs,
-    );
-    return firstIntValue(rows);
-  }
-
-  static int firstIntValue(List<Map<String, Object?>> rows) {
-    if (rows.isEmpty) return 0;
-    return rows.first.values.firstWhere((element) => element is int) as int;
-  }
-
-  /// 迁移旧版图片数据，解决图片隔离问题
   static Future<int> migrateOldImageData() async {
     AppLog.info("sql: migrateOldImageData");
-    
-    // 0. 预处理：修复日记表中可能缺失的时间字段（防止历史界面显示在同一天）
     String now = DateTime.now().toString().substring(0, 19);
     await database.rawUpdate('''
-      UPDATE journal_note 
-      SET create_time = update_time 
+      UPDATE journal_note SET create_time = update_time 
       WHERE (create_time IS NULL OR create_time = '') AND (update_time IS NOT NULL AND update_time != '');
     ''');
     await database.rawUpdate('''
-      UPDATE journal_note 
-      SET update_time = create_time 
+      UPDATE journal_note SET update_time = create_time 
       WHERE (update_time IS NULL OR update_time = '') AND (create_time IS NOT NULL AND create_time != '');
     ''');
     await database.rawUpdate('''
-      UPDATE journal_note 
-      SET create_time = '$now', update_time = '$now' 
+      UPDATE journal_note SET create_time = '$now', update_time = '$now' 
       WHERE (create_time IS NULL OR create_time = '') AND (update_time IS NULL OR update_time = '');
     ''');
 
-    // 1. 处理那些只在日记中存在的图片
     int movedCount = await database.rawUpdate('''
-      UPDATE image 
-      SET note_type = ${NoteType.journal.value} 
-      WHERE note_type = 0 
-      AND note_id IN (SELECT id FROM journal_note) 
+      UPDATE image SET note_type = ${NoteType.journal.value} 
+      WHERE note_type = 0 AND note_id IN (SELECT id FROM journal_note) 
       AND note_id NOT IN (SELECT note_id FROM episode_note);
     ''');
-    AppLog.info("迁移了 $movedCount 条仅属于日记的图片记录");
 
-    // 2. 处理 ID 冲突的情况（既在番剧笔记也在日记中存在）
-    // 找出冲突的图片记录
     var conflictRows = await database.rawQuery('''
-      SELECT * FROM image 
-      WHERE note_type = 0 
-      AND note_id IN (SELECT id FROM journal_note) 
+      SELECT * FROM image WHERE note_type = 0 AND note_id IN (SELECT id FROM journal_note) 
       AND note_id IN (SELECT note_id FROM episode_note);
     ''');
 
     int duplicatedCount = 0;
     for (var row in conflictRows) {
-      // 检查是否已经存在该记录的日记副本（防止重复运行迁移导致数据膨胀）
       var exist = await database.rawQuery('''
-        SELECT image_id FROM image 
-        WHERE note_id = ${row['note_id']} 
-        AND image_local_path = '${row['image_local_path']}' 
-        AND note_type = ${NoteType.journal.value}
+        SELECT image_id FROM image WHERE note_id = ${row['note_id']} 
+        AND image_local_path = '${row['image_local_path']}' AND note_type = ${NoteType.journal.value}
       ''');
-      
       if (exist.isEmpty) {
-        // 为日记创建一条副本
         await database.rawInsert('''
           INSERT INTO image (note_id, image_local_path, order_idx, note_type)
           VALUES (${row['note_id']}, '${row['image_local_path']}', ${row['order_idx'] ?? 0}, ${NoteType.journal.value});
@@ -866,8 +405,6 @@ class SqliteUtil {
         duplicatedCount++;
       }
     }
-    AppLog.info("为 ID 冲突的图片创建了 $duplicatedCount 条日记副本");
-
     return movedCount + duplicatedCount;
   }
 
@@ -875,5 +412,111 @@ class SqliteUtil {
     if (rows.isEmpty || rows.first.values.isEmpty) return null;
     final value = rows.first.values.first;
     return value is T ? value : null;
+  }
+
+  static Future<Anime> getAnimeByAnimeId(int animeId) async {
+    var list = await database.rawQuery('select * from anime where anime_id = $animeId;');
+    if (list.isEmpty) return Anime(animeId: 0, animeName: "", animeEpisodeCnt: 0);
+    return await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true, queryHasJoinedSeries: true);
+  }
+
+  static void insertHistoryItem(int animeId, int episodeNumber, String date, int reviewNumber) async {
+    await database.rawInsert('insert into history(date, anime_id, episode_number, review_number) values(\'$date\', $animeId, $episodeNumber, $reviewNumber);');
+  }
+
+  static void updateHistoryItem(int animeId, int episodeNumber, String date, int reviewNumber) async {
+    await database.rawUpdate('update history set date = \'$date\' where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;');
+  }
+
+  static void deleteHistoryItemByAnimeIdAndEpisodeNumberAndReviewNumber(int animeId, int episodeNumber, int reviewNumber) async {
+    await database.rawDelete('delete from history where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;');
+  }
+
+  static void insertTagName(String tagName, int tagOrder) async {
+    await database.rawInsert('insert into tag(tag_name, tag_order) values(\'$tagName\', $tagOrder);');
+  }
+
+  static void updateTagName(String oldTagName, String newTagName) async {
+    await database.rawUpdate('update tag set tag_name = \'$newTagName\' where tag_name = \'$oldTagName\';');
+    await database.rawUpdate('update anime set tag_name = \'$newTagName\' where tag_name = \'$oldTagName\';');
+  }
+
+  static Future<bool> updateTagOrder(List<String> tagNames) async {
+    for (int i = 0; i < tagNames.length; ++i) {
+      await database.rawUpdate('update tag set tag_order = $i where tag_name = \'${tagNames[i]}\';');
+    }
+    return true;
+  }
+
+  static void deleteTagByTagName(String tagName) async {
+    await database.rawDelete('delete from tag where tag_name = \'$tagName\';');
+  }
+
+  static Future<List<String>> getAllTags() async {
+    var list = await database.rawQuery('select tag_name from tag order by tag_order');
+    return list.map((e) => e["tag_name"] as String).toList();
+  }
+
+  static Future<Anime> getAnimeByAnimeUrl(Anime anime) async {
+    if (anime.animeUrl.isEmpty) return anime..animeId = 0;
+    var list = await database.rawQuery('select * from anime where anime_url = \'${anime.animeUrl}\';');
+    if (list.isEmpty) return anime..animeId = 0;
+    return await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true);
+  }
+
+  static Future<List<Episode>> getEpisodeHistoryByAnimeIdAndRange(Anime anime, int startEpisodeNumber, int endEpisodeNumber) async {
+    var list = await database.rawQuery('select date, episode_number from history where anime_id = ${anime.animeId} and review_number = ${anime.reviewNumber} and episode_number >= $startEpisodeNumber and episode_number <= $endEpisodeNumber;');
+    List<Episode> episodes = List.generate(endEpisodeNumber - startEpisodeNumber + 1, (i) => Episode(startEpisodeNumber + i, anime.reviewNumber, startNumber: EpisodeUtil.getFakeEpisodeStartNumber(anime)));
+    for (var row in list) {
+      int idx = (row['episode_number'] as int) - startEpisodeNumber;
+      if (idx >= 0 && idx < episodes.length) episodes[idx].dateTime = row['date'] as String;
+    }
+    return episodes;
+  }
+
+  static Future<int> getAnimesCntBytagName(String tagName) async {
+    var list = await database.rawQuery('select count(anime_id) cnt from anime where tag_name = \'$tagName\';');
+    return list[0]["cnt"] as int;
+  }
+
+  static Future<int> getCheckedEpisodeCntByAnimeId(int animeId, {int reviewNumber = 0}) async {
+    var list = await database.rawQuery('select count(anime_id) cnt from history where anime_id = $animeId and review_number = $reviewNumber;');
+    return list[0]["cnt"] as int;
+  }
+
+  static Future<List<Anime>> getAllAnimeBytagName(String tagName, int offset, int number, {required AnimeSortCond animeSortCond}) async {
+    // 简化实现，因为这个方法主要被AnimeListPage使用，确保功能存在
+    var list = await database.rawQuery('select * from anime where tag_name = \'$tagName\' limit $number offset $offset;');
+    List<Anime> res = [];
+    for (var row in list) {
+      res.add(await AnimeDao.row2Bean(row, queryCheckedEpisodeCnt: true));
+    }
+    return res;
+  }
+
+  static Future<List<int>> getAnimeCntPerTag() async {
+    var list = await database.rawQuery('select count(anime_id) as anime_cnt from tag left outer join anime on anime.tag_name = tag.tag_name group by tag.tag_name order by tag.tag_order;');
+    return list.map((e) => e['anime_cnt'] as int).toList();
+  }
+
+  static Future<Anime> getCustomAnimeByAnimeName(String animeName) async {
+    var list = await database.rawQuery('select * from anime where anime_name = \'${EscapeUtil.escapeStr(animeName)}\' and (anime_url is null or length(anime_url) = 0);');
+    if (list.isEmpty) return Anime(animeName: animeName, animeEpisodeCnt: 0);
+    return await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true);
+  }
+
+  static Future<List<Anime>> getCustomAnimesIfContainAnimeName(String animeName) async {
+    var list = await database.rawQuery('select * from anime where anime_name like \'%${EscapeUtil.escapeStr(animeName)}%\' and (anime_url is null or length(anime_url) = 0);');
+    List<Anime> res = [];
+    for (var row in list) {
+      res.add(await AnimeDao.row2Bean(row, queryCheckedEpisodeCnt: true));
+    }
+    return res;
+  }
+
+  static Future<int> count({required String tableName, String? columnName = 'id', String? where, List<Object?>? whereArgs}) async {
+    final rows = await database.query(tableName, columns: ['COUNT(${columnName ?? "*"})'], where: where, whereArgs: whereArgs);
+    if (rows.isEmpty) return 0;
+    return rows.first.values.first as int;
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:manji_trace/controllers/remote_controller.dart';
 import 'package:manji_trace/utils/error_format_util.dart';
 import 'package:manji_trace/utils/sp_util.dart';
@@ -69,6 +71,20 @@ class WebDavUtil {
       localPath,
       remotePath,
     );
+  }
+
+  static Future<void> uploadString(String content, String remotePath) async {
+    return client.write(remotePath, Uint8List.fromList(utf8.encode(content)));
+  }
+
+  static Future<String?> readString(String remotePath) async {
+    try {
+      var data = await client.read(remotePath);
+      return utf8.decode(data);
+    } catch (e) {
+      // 文件可能不存在，不抛出异常
+      return null;
+    }
   }
 
   static Future<String> getRemoteDirPath() async {
