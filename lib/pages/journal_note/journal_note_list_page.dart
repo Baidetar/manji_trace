@@ -6,7 +6,8 @@ import 'package:manji_trace/components/empty_data_hint.dart';
 import 'package:manji_trace/utils/time_util.dart';
 import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:manji_trace/components/search_app_bar.dart';
-import 'package:manji_trace/components/common_image.dart';
+import 'package:manji_trace/components/note/note_img_grid.dart';
+import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
@@ -120,103 +121,55 @@ class _JournalNoteListPageState extends State<JournalNoteListPage> {
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      elevation: 0,
-      // 移除显式的 side 边框和深色背景，使用透明或默认效果
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () => _editNote(note),
         onLongPress: () => _showDeleteDialog(note),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 统一图标风格：使用与编辑器一致的 book_outlined，并增加轻量背景
-              if (!hasImages)
-                Padding(
-                  padding: const EdgeInsets.only(right: 12),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.book_outlined,
-                      size: 24,
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
-                    ),
-                  ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ListTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      note.title.isEmpty ? "未命名笔记" : note.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      note.content.isEmpty ? "无内容" : note.content,
-                      maxLines: 2, // 保持与笔记列表一致的紧凑感
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.3,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Text(
-                          TimeUtil.getHumanReadableDateTimeStr(note.createTime),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: Theme.of(context).colorScheme.outline,
-                              ),
-                        ),
-                        if (hasImages) ...[
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.image_outlined,
-                            size: 12,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${note.relativeLocalImages.length}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.outline,
-                                ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+                child: Icon(
+                  Icons.book_outlined,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                 ),
               ),
-              if (hasImages)
-                Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: SizedBox(
-                      width: 64, // 略微缩小图片，使其更精致
-                      height: 64,
-                      child: CommonImage(
-                        note.relativeLocalImages.first.path,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+              title: Text(
+                note.title.isEmpty ? "未命名笔记" : note.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                TimeUtil.getHumanReadableDateTimeStr(note.createTime),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.more_horiz),
+                onPressed: () => _showDeleteDialog(note),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(15, 0, 15, 10),
+              child: Text(
+                note.content.isEmpty && !hasImages ? "什么都没有写" : note.content,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: AppTheme.noteStyle,
+              ),
+            ),
+            if (hasImages)
+              NoteImgGrid(relativeLocalImages: note.relativeLocalImages),
+            if (!hasImages) const SizedBox(height: 5),
+          ],
         ),
       ),
     );

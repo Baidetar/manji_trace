@@ -9,6 +9,7 @@ import 'package:manji_trace/models/anime.dart';
 import 'package:manji_trace/models/episode.dart';
 import 'package:manji_trace/models/note_filter.dart';
 import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
 import 'package:manji_trace/utils/escape_util.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -122,7 +123,7 @@ class NoteDao {
     // 还是每次把所有图片又重新设置下标吧
     var lm = await database.rawQuery('''
     select image_id, image_local_path from image
-    where note_id = $noteId
+    where note_id = $noteId and note_type = ${NoteType.episode.value}
     order by order_idx, note_id; -- 先按照指定顺序升序，如果还没有顺序，则按照id升序
     ''');
     List<RelativeLocalImage> relativeLocalImages = [];
@@ -312,7 +313,7 @@ class NoteDao {
           $likeAnimeNameSql
           and episode_note.note_id in(
               select distinct episode_note.note_id
-              from episode_note inner join image on episode_note.note_id = image.note_id $likeNoteContentSql
+              from episode_note inner join image on episode_note.note_id = image.note_id and image.note_type = ${NoteType.episode.value} $likeNoteContentSql
               union
               select episode_note.note_id
               from episode_note where note_content is not null and length(note_content) > 0 $likeNoteContentSql
@@ -358,7 +359,7 @@ class NoteDao {
 
     int num = await database.rawDelete('''
     delete from image
-    where note_id = $noteId;
+    where note_id = $noteId and note_type = ${NoteType.episode.value};
     ''');
     AppLog.info("删除了$num个与该笔记相关的图片");
     num = await database.rawDelete('''
@@ -391,7 +392,7 @@ class NoteDao {
 
     // 内容为空，但添加了图片的笔记数量
     final rows2 = await database.rawQuery('''
-      select count(distinct note_id) total from image where note_id in
+      select count(distinct note_id) total from image where note_type = ${NoteType.episode.value} and note_id in
         (select note_id from episode_note where episode_number > 0 and length(note_content) = 0)
     ''');
     int emptyContentButExistImageNoteCnt = rows2.first['total'] as int;

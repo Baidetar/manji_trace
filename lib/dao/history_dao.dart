@@ -9,6 +9,7 @@ import '../models/history_plus.dart';
 import '../models/journal_note.dart';
 import '../models/params/page_params.dart';
 import '../utils/sqlite_util.dart';
+import 'journal_note_dao.dart';
 
 class HistoryDao {
   // 整体思路：先找到符合该日期的所有动漫id，然后根据动漫id去重，再根据动漫id得到观看的最小值和最大值
@@ -17,23 +18,26 @@ class HistoryDao {
       {required PageParams pageParams, required int dateLength}) async {
     AppLog.info("sql: getHistoryPageable: pageParams=$pageParams, dateLength=$dateLength");
     // 获取有数据的最近几天/月（来自history表和journal_note表）
+    // 注意：日记应当按创建时间归类
     List<Map<String, Object?>> dayList = await SqliteUtil.database.rawQuery('''
     select substr(date, 1, $dateLength) dateSubstr from history
     union
-    select substr(update_time, 1, $dateLength) dateSubstr from journal_note
+    select substr(create_time, 1, $dateLength) dateSubstr from journal_note
     group by dateSubstr
     order by dateSubstr desc
     limit ${pageParams.pageSize} offset ${pageParams.getOffset()};
     ''');
     List<String> list = [];
     for (var map in dayList) {
-      list.add(map['dateSubstr'] as String);
+      if (map['dateSubstr'] != null && map['dateSubstr'].toString().isNotEmpty) {
+        list.add(map['dateSubstr'] as String);
+      }
     }
 
     // 遍历这些日期，获取每个日期对应的混合records（动画历史+日记）
     List<HistoryPlus> historys = [];
     for (var day in list) {
-      List<UnionHistoryRecord> records = await _getUnionRecordsByDate(day);
+      List<UnionHistoryRecord> records = await _getUnionRecordsByDate(day, dateLength);
       if (records.isNotEmpty) {
         historys.add(HistoryPlus(day, records));
       }
@@ -42,7 +46,7 @@ class HistoryDao {
   }
 
   /// 获取某日期的混合历史记录（动画历史+日记）
-  static Future<List<UnionHistoryRecord>> _getUnionRecordsByDate(String date) async {
+  static Future<List<UnionHistoryRecord>> _getUnionRecordsByDate(String date, int dateLength) async {
     List<UnionHistoryRecord> records = [];
 
     // 获取动画历史记录
@@ -50,13 +54,13 @@ class HistoryDao {
     records.addAll(animeRecords.map<UnionHistoryRecord>((r) => UnionHistoryRecord.anime(r)));
 
     // 获取日记
-    final notes = await _getJournalNotesByDate(date);
+    final notes = await _getJournalNotesByDate(date, dateLength);
     records.addAll(notes.map<UnionHistoryRecord>((n) => UnionHistoryRecord.note(n)));
 
-    // 按时间倒序混合排列（日记按updateTime，动画历史按date）
+    // 按时间倒序混合排列（日记按createTime，动画历史按date）
     records.sort((a, b) {
-      String timeA = a.isAnime ? '0000-00-00' : a.noteRecord!.updateTime;
-      String timeB = b.isAnime ? '0000-00-00' : b.noteRecord!.updateTime;
+      String timeA = a.isAnime ? '0000-00-00' : a.noteRecord!.createTime;
+      String timeB = b.isAnime ? '0000-00-00' : b.noteRecord!.createTime;
       return timeB.compareTo(timeA);
     });
 
@@ -64,22 +68,18 @@ class HistoryDao {
   }
 
   /// 获取某日期的日记
-  static Future<List<JournalNote>> _getJournalNotesByDate(String date) async {
+  static Future<List<JournalNote>> _getJournalNotesByDate(String date, int dateLength) async {
     var list = await SqliteUtil.database.query(
       'journal_note',
-      where: "substr(update_time, 1, 10) = ?",
-      whereArgs: [date.padRight(10, '0').substring(0, 10)],
-      orderBy: 'update_time desc',
+      where: "substr(create_time, 1, $dateLength) = ?",
+      whereArgs: [date],
+      orderBy: 'create_time desc',
     );
-    return list.map((row) {
-      return JournalNote(
-        id: row['id'] as int,
-        title: row['title'] as String? ?? '',
-        content: row['content'] as String? ?? '',
-        createTime: row['create_time'] as String? ?? '',
-        updateTime: row['update_time'] as String? ?? '',
-      );
-    }).toList();
+    List<JournalNote> notes = [];
+    for (var row in list) {
+      notes.add(await JournalNoteDao.row2bean(row));
+    }
+    return notes;
   }
 
   static _getHistoryRecordsByDate(String date) async {

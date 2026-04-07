@@ -313,7 +313,13 @@ class _RecordItemState extends State<_RecordItem> {
             note.title = title;
             note.content = content;
             note.createTime = createTime;
-            await Get.find<JournalNoteController>().updateNote(note);
+            
+            // 确保控制器存在
+            final controller = Get.isRegistered<JournalNoteController>() 
+                ? Get.find<JournalNoteController>() 
+                : Get.put(JournalNoteController());
+            await controller.updateNote(note);
+            
             // 通知 HistoryController 刷新单条记录，保持 UI 同步
             Get.find<HistoryController>().onNoteUpdated(note);
             setState(() {});
@@ -325,24 +331,23 @@ class _RecordItemState extends State<_RecordItem> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 统一图标风格：使用与编辑器一致的 book_outlined，并增加轻量背景
-            if (!hasImages)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.book_outlined,
-                    size: 24,
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
-                  ),
+            // 统一左侧图标区域，保持与编辑器一致的风格标识
+            Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.book_outlined,
+                  size: 24,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.6),
                 ),
               ),
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -389,21 +394,6 @@ class _RecordItemState extends State<_RecordItem> {
                 ],
               ),
             ),
-            if (hasImages)
-              Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: SizedBox(
-                    width: 52, // 历史页面项通常较窄，稍微缩小图片尺寸
-                    height: 52,
-                    child: CommonImage(
-                      note.relativeLocalImages.first.path,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),

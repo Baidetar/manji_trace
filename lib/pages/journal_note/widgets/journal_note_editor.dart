@@ -3,9 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:manji_trace/models/journal_note.dart';
 import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
+import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/time_util.dart';
 import 'package:manji_trace/utils/toast_util.dart';
-import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/components/note/note_img_item.dart';
 import 'package:manji_trace/values/theme.dart';
@@ -13,6 +14,7 @@ import 'package:manji_trace/global.dart';
 import 'package:manji_trace/dao/image_dao.dart';
 import 'package:manji_trace/dao/journal_note_dao.dart';
 import 'package:manji_trace/pages/journal_note/journal_note_controller.dart';
+import 'package:manji_trace/pages/history/history_controller.dart';
 import 'package:get/get.dart';
 import 'package:desktop_drop/desktop_drop.dart';
 import 'package:file_picker/file_picker.dart';
@@ -68,26 +70,41 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
       if (widget.note != null) {
         // 直接从数据库和列表中删除
         try {
-          final controller = Get.find<JournalNoteController>();
+          // 确保控制器存在
+          final controller = Get.isRegistered<JournalNoteController>() 
+              ? Get.find<JournalNoteController>() 
+              : Get.put(JournalNoteController());
           await controller.deleteNote(widget.note!.id);
         } catch (e) {
+          // 如果还是失败，直接调用 DAO
           await JournalNoteDao.deleteNote(widget.note!.id);
+          try {
+             Get.find<HistoryController>().onNoteDeleted(widget.note!.id);
+          } catch (_) {}
         }
       }
       Navigator.of(context).pop();
       return;
     }
 
-    // 执行保存回调
-    widget.onSave(_titleController.text, _contentController.text, _createTime);
+    // 检查是否有修改
+    bool isChanged = _titleController.text != (widget.note?.title ?? "") ||
+        _contentController.text != (widget.note?.content ?? "") ||
+        _createTime != (widget.note?.createTime ?? "") ||
+        changeOrderIdx;
 
-    // 如果图片顺序发生了改变，异步更新数据库
-    if (changeOrderIdx && widget.note != null) {
-      for (int i = 0; i < widget.note!.relativeLocalImages.length; i++) {
-        ImageDao.updateImageOrderIdxById(
-          widget.note!.relativeLocalImages[i].imageId, 
-          i
-        );
+    if (isChanged) {
+      // 执行保存回调
+      widget.onSave(_titleController.text, _contentController.text, _createTime);
+
+      // 如果图片顺序发生了改变，异步更新数据库
+      if (changeOrderIdx && widget.note != null) {
+        for (int i = 0; i < widget.note!.relativeLocalImages.length; i++) {
+          ImageDao.updateImageOrderIdxById(
+            widget.note!.relativeLocalImages[i].imageId, 
+            i
+          );
+        }
       }
     }
     Navigator.of(context).pop();
@@ -377,6 +394,7 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
       widget.note!.id,
       relativeImagePath,
       widget.note!.relativeLocalImages.length,
+      noteType: NoteType.journal,
     );
     widget.note!.relativeLocalImages.add(RelativeLocalImage(imageId, relativeImagePath));
   }

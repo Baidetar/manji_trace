@@ -14,6 +14,7 @@ import 'package:manji_trace/utils/escape_util.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/models/anime.dart';
 import 'package:manji_trace/models/episode.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
 import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/platform.dart';
 import 'package:manji_trace/utils/sqlite_sync_util.dart';
@@ -71,6 +72,8 @@ class SqliteUtil {
     await SqliteUtil.addColumnTwoTimeToEpisodeNote();
     // 为图片表增加顺序列，支持自定义排序
     await SqliteUtil.addColumnOrderIdxToImage();
+    // 为图片表增加笔记类型列，支持独立笔记
+    await SqliteUtil.addColumnNoteTypeToImage();
 
     // 创建标签表、动漫标签表、集描述表
     await LabelDao.createTable();
@@ -681,12 +684,12 @@ class SqliteUtil {
   }
 
   static Future<int> insertNoteIdAndImageLocalPath(
-      int noteId, String imageLocalPath, int orderIdx) async {
+      int noteId, String imageLocalPath, int orderIdx, {NoteType noteType = NoteType.episode}) async {
     AppLog.info(
-        "sql: insertNoteIdAndLocalImg(noteId=$noteId, imageLocalPath=$imageLocalPath, orderIdx=$orderIdx)");
+        "sql: insertNoteIdAndLocalImg(noteId=$noteId, imageLocalPath=$imageLocalPath, orderIdx=$orderIdx, noteType=${noteType.value})");
     return await database.rawInsert('''
-    insert into image (note_id, image_local_path, order_idx)
-    values ($noteId, '$imageLocalPath', $orderIdx);
+    insert into image (note_id, image_local_path, order_idx, note_type)
+    values ($noteId, '$imageLocalPath', $orderIdx, ${noteType.value});
     ''');
   }
 
@@ -696,6 +699,16 @@ class SqliteUtil {
     delete from image
     where image_id = $imageId;
     ''');
+  }
+
+  static Future<void> addColumnNoteTypeToImage() async {
+    await addColumnName(
+      tableName: 'image',
+      columnName: 'note_type',
+      columnType: 'INTEGER',
+      initialValue: 0, // 默认为番剧笔记
+      logName: 'addColumnNoteTypeToImage',
+    );
   }
 
   static Future<Anime> getCustomAnimeByAnimeName(String animeName) async {
@@ -791,6 +804,71 @@ class SqliteUtil {
   static int firstIntValue(List<Map<String, Object?>> rows) {
     if (rows.isEmpty) return 0;
     return rows.first.values.firstWhere((element) => element is int) as int;
+  }
+
+  /// 迁移旧版图片数据，解决图片隔离问题
+  static Future<int> migrateOldImageData() async {
+    AppLog.info("sql: migrateOldImageData");
+    
+    // 0. 预处理：修复日记表中可能缺失的时间字段（防止历史界面显示在同一天）
+    String now = DateTime.now().toString().substring(0, 19);
+    await database.rawUpdate('''
+      UPDATE journal_note 
+      SET create_time = update_time 
+      WHERE (create_time IS NULL OR create_time = '') AND (update_time IS NOT NULL AND update_time != '');
+    ''');
+    await database.rawUpdate('''
+      UPDATE journal_note 
+      SET update_time = create_time 
+      WHERE (update_time IS NULL OR update_time = '') AND (create_time IS NOT NULL AND create_time != '');
+    ''');
+    await database.rawUpdate('''
+      UPDATE journal_note 
+      SET create_time = '$now', update_time = '$now' 
+      WHERE (create_time IS NULL OR create_time = '') AND (update_time IS NULL OR update_time = '');
+    ''');
+
+    // 1. 处理那些只在日记中存在的图片
+    int movedCount = await database.rawUpdate('''
+      UPDATE image 
+      SET note_type = ${NoteType.journal.value} 
+      WHERE note_type = 0 
+      AND note_id IN (SELECT id FROM journal_note) 
+      AND note_id NOT IN (SELECT note_id FROM episode_note);
+    ''');
+    AppLog.info("迁移了 $movedCount 条仅属于日记的图片记录");
+
+    // 2. 处理 ID 冲突的情况（既在番剧笔记也在日记中存在）
+    // 找出冲突的图片记录
+    var conflictRows = await database.rawQuery('''
+      SELECT * FROM image 
+      WHERE note_type = 0 
+      AND note_id IN (SELECT id FROM journal_note) 
+      AND note_id IN (SELECT note_id FROM episode_note);
+    ''');
+
+    int duplicatedCount = 0;
+    for (var row in conflictRows) {
+      // 检查是否已经存在该记录的日记副本（防止重复运行迁移导致数据膨胀）
+      var exist = await database.rawQuery('''
+        SELECT image_id FROM image 
+        WHERE note_id = ${row['note_id']} 
+        AND image_local_path = '${row['image_local_path']}' 
+        AND note_type = ${NoteType.journal.value}
+      ''');
+      
+      if (exist.isEmpty) {
+        // 为日记创建一条副本
+        await database.rawInsert('''
+          INSERT INTO image (note_id, image_local_path, order_idx, note_type)
+          VALUES (${row['note_id']}, '${row['image_local_path']}', ${row['order_idx'] ?? 0}, ${NoteType.journal.value});
+        ''');
+        duplicatedCount++;
+      }
+    }
+    AppLog.info("为 ID 冲突的图片创建了 $duplicatedCount 条日记副本");
+
+    return movedCount + duplicatedCount;
   }
 
   static T? firstRowColumnValue<T>(List<Map<String, Object?>> rows) {

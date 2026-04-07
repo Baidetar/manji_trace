@@ -1,6 +1,7 @@
 import 'package:manji_trace/models/journal_note.dart';
 import 'package:manji_trace/models/params/page_params.dart';
 import 'package:manji_trace/models/relative_local_image.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/utils/time_util.dart';
@@ -40,7 +41,7 @@ class JournalNoteDao {
   // map转为对象
   static Future<JournalNote> row2bean(Map row) async {
     int noteId = row['id'] as int;
-    List<RelativeLocalImage> images = await ImageDao.getRelativeLocalImgsByNoteId(noteId);
+    List<RelativeLocalImage> images = await ImageDao.getRelativeLocalImgsByNoteId(noteId, noteType: NoteType.journal);
     
     return JournalNote(
       id: noteId,
@@ -153,6 +154,13 @@ class JournalNoteDao {
   // 删除笔记
   static Future<int> deleteNote(int id) async {
     AppLog.info("sql: deleteNote");
+    // 先删除图片
+    await database.delete(
+      'image',
+      where: 'note_id = ? and note_type = ?',
+      whereArgs: [id, NoteType.journal.value],
+    );
+
     int count = await database.delete(
       'journal_note',
       where: 'id = ?',
@@ -165,6 +173,14 @@ class JournalNoteDao {
   static Future<int> deleteNotes(List<int> ids) async {
     AppLog.info("sql: deleteNotes");
     String idList = ids.join(',');
+
+    // 先删除图片
+    await database.delete(
+      'image',
+      where: 'note_id in ($idList) and note_type = ?',
+      whereArgs: [NoteType.journal.value],
+    );
+
     int count = await database.delete(
       'journal_note',
       where: 'id in ($idList)',

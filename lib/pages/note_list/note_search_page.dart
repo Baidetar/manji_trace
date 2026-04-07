@@ -45,6 +45,8 @@ class _NoteSearchPageState extends State<NoteSearchPage> {
           noteFilter: noteFilter,
           key: ValueKey(noteFilter.valueKeyStr),
         );
+      case NoteType.journal:
+        return const Center(child: Text('请通过日记模块搜索日记'));
     }
   }
 

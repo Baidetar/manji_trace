@@ -5,6 +5,7 @@ import 'package:manji_trace/models/anime_episode_info.dart';
 import 'package:manji_trace/models/enum/anime_area.dart';
 import 'package:manji_trace/models/enum/anime_category.dart';
 import 'package:manji_trace/models/enum/play_status.dart';
+import 'package:manji_trace/models/enum/note_type.dart';
 import 'package:manji_trace/models/migrate_config.dart';
 import 'package:manji_trace/models/params/page_params.dart';
 import 'package:manji_trace/pages/local_search/models/local_select_filter.dart';
@@ -168,7 +169,7 @@ class AnimeDao {
     // 先根据animeId找到所有笔记，然后根据笔记id找到图片，删除图片后再删除笔记
     await db.rawDelete('''
       delete from image
-      where note_id in (
+      where note_type = ${NoteType.episode.value} and note_id in (
         select note_id from episode_note
         where anime_id = $animeId
       );

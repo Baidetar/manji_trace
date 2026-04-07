@@ -4,6 +4,8 @@ import 'package:manji_trace/pages/settings/backup_restore/remote.dart';
 import 'package:manji_trace/pages/settings/pages/rbr_page.dart';
 import 'package:manji_trace/routes/get_route.dart';
 import 'package:manji_trace/utils/backup_util.dart';
+import 'package:manji_trace/utils/sqlite_util.dart';
+import 'package:manji_trace/utils/toast_util.dart';
 import 'package:manji_trace/widgets/common_scaffold_body.dart';
 import 'package:manji_trace/widgets/setting_card.dart';
 
@@ -26,6 +28,12 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
           const LocalBackupPage(),
           const RemoteBackupPage(),
           SettingCard(
+            title: '数据迁移',
+            children: [
+              _buildMigrateOldImagesTile(),
+            ],
+          ),
+          SettingCard(
             title: '撤销还原',
             children: [
               _buildRevokeRestoreTile(),
@@ -33,6 +41,35 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
           ),
         ],
       )),
+    );
+  }
+
+  ListTile _buildMigrateOldImagesTile() {
+    return ListTile(
+      title: const Text("修复旧版图片显示"),
+      subtitle: const Text("解决升级后旧日记图片不显示的问题"),
+      onTap: () async {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("确认修复？"),
+            content: const Text("该操作将尝试修复由于数据库升级导致的旧日记图片无法显示的问题。\n\n"
+                "如果您在升级后发现旧日记中的图片消失了，请点击确定。"),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("取消")),
+              TextButton(
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    int count = await SqliteUtil.migrateOldImageData();
+                    ToastUtil.showText("修复完成，共处理 $count 条记录");
+                  },
+                  child: const Text("确定")),
+            ],
+          ),
+        );
+      },
     );
   }
 
