@@ -10,7 +10,6 @@ import 'package:manji_trace/pages/settings/backup_file_list.dart';
 import 'package:manji_trace/pages/settings/backup_restore/home.dart';
 import 'package:manji_trace/pages/settings/backup_restore/login_form.dart';
 import 'package:manji_trace/routes/get_route.dart';
-import 'package:manji_trace/utils/backup_util.dart';
 import 'package:manji_trace/utils/sp_util.dart';
 import 'package:manji_trace/utils/webdav_util.dart';
 import 'package:manji_trace/values/values.dart';
@@ -73,6 +72,31 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
                     icon: const Icon(MingCuteIcons.mgc_arrow_right_line))
                 : null,
             children: [
+              GetBuilder<BackupService>(
+                builder: (service) {
+                  if (!service.isBackingUp ||
+                      (service.backupProgressScope != 'remote' &&
+                          service.backupProgressScope.isNotEmpty)) {
+                    return const SizedBox.shrink();
+                  }
+                  return ListTile(
+                    title: Text(
+                      service.backupProgressText.isEmpty
+                          ? '正在执行备份'
+                          : service.backupProgressText,
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: LinearProgressIndicator(
+                        value: service.backupProgress <= 0 ||
+                                service.backupProgress >= 1
+                            ? null
+                            : service.backupProgress,
+                      ),
+                    ),
+                  );
+                },
+              ),
               GetBuilder(
                 init: RemoteController.to,
                 builder: (_) => ListTile(
@@ -92,7 +116,18 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
               ListTile(
                 title: const Text("立即备份"),
                 subtitle: const Text("点击进行备份，备份目录为 /漫记/backup"),
+                trailing: backupService.isBackingUp
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.backup_outlined),
                 onTap: () async {
+                  if (backupService.isBackingUp) {
+                    ToastUtil.showText("已有备份任务正在进行");
+                    return;
+                  }
                   if (RemoteController.to.isOffline) {
                     ToastUtil.showText("请先配置帐号，再进行备份");
                     return;
@@ -111,7 +146,10 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
                   String remoteBackupDirPath =
                       await WebDavUtil.getRemoteBackupDirPath();
                   if (remoteBackupDirPath.isNotEmpty) {
-                    BackupUtil.backup(remoteBackupDirPath: remoteBackupDirPath);
+                    await backupService.runBackupWithProgress(
+                      remoteBackupDirPath: remoteBackupDirPath,
+                      progressScope: 'remote',
+                    );
                   }
                 },
               ),

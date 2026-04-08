@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file_saver/file_saver.dart';
 import 'package:manji_trace/components/dialog/dialog_share_error_log.dart';
+import 'package:manji_trace/models/params/result.dart';
 import 'package:manji_trace/utils/backup_util.dart';
 import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/platform.dart';
 import 'package:manji_trace/utils/sp_util.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/utils/toast_util.dart';
@@ -25,8 +28,95 @@ enum BackupMode {
   const BackupMode(this.title, this.intervalSeconds);
 }
 
-class BackupService extends GetxService {
+class BackupService extends GetxController {
   static BackupService get to => Get.find();
+
+  bool isBackingUp = false;
+  double backupProgress = 0;
+  String backupProgressText = '';
+  String backupProgressScope = '';
+
+  void _setBackupProgress(double progress, String text) {
+    backupProgress = progress.clamp(0, 1).toDouble();
+    backupProgressText = text;
+    update();
+  }
+
+  Future<String> runBackupWithProgress({
+    String localBackupDirPath = '',
+    String remoteBackupDirPath = '',
+    bool showToastFlag = true,
+    bool automatic = false,
+    String progressScope = 'generic',
+  }) async {
+    if (isBackingUp) {
+      return '';
+    }
+
+    isBackingUp = true;
+    backupProgressScope = progressScope;
+    _setBackupProgress(0.01, '开始备份');
+    // 先让界面有机会渲染进度条，再进入较重的打包流程。
+    await Future.delayed(const Duration(milliseconds: 80));
+    try {
+      final String path = await BackupUtil.backup(
+        localBackupDirPath: localBackupDirPath,
+        remoteBackupDirPath: remoteBackupDirPath,
+        showToastFlag: showToastFlag,
+        automatic: automatic,
+        onProgress: _setBackupProgress,
+      );
+      _setBackupProgress(1.0, '备份完成');
+      return path;
+    } finally {
+      // 完成态短暂停留，避免进度条一闪而过。
+      await Future.delayed(const Duration(milliseconds: 350));
+      isBackingUp = false;
+      backupProgressScope = '';
+      update();
+    }
+  }
+
+  Future<void> exportBackupWithSystemPicker() async {
+    if (isBackingUp) {
+      ToastUtil.showText('已有备份任务正在进行');
+      return;
+    }
+    if (PlatformUtil.isMobile == false) {
+      return;
+    }
+
+    isBackingUp = true;
+    backupProgressScope = 'export';
+    _setBackupProgress(0.01, '正在准备导出备份');
+    await Future.delayed(const Duration(milliseconds: 80));
+    try {
+      final String zipName = await BackupUtil.generateZipName();
+      final File tempZipFile = await BackupUtil.createTempBackUpFile(
+        zipName,
+        onProgress: _setBackupProgress,
+      );
+
+      _setBackupProgress(0.92, '请在系统窗口选择保存位置');
+      await FileSaver.instance.saveAs(
+        name: zipName,
+        ext: '',
+        bytes: tempZipFile.readAsBytesSync(),
+        mimeType: MimeType.zip,
+      );
+      tempZipFile.delete();
+      _setBackupProgress(1.0, '导出完成');
+      ToastUtil.showText('本地导出成功');
+    } catch (e) {
+      AppLog.error('导出本地备份失败: $e');
+      ToastUtil.showError('导出失败: $e');
+    } finally {
+      await Future.delayed(const Duration(milliseconds: 350));
+      isBackingUp = false;
+      backupProgressScope = '';
+      update();
+    }
+  }
 
   String curRemoteBackupModeName = SPUtil.getString("curRemoteBackupModeName",
       defaultValue: BackupMode.close.name);
@@ -49,11 +139,12 @@ class BackupService extends GetxService {
     // 如果开启了本地备份
     if (SPUtil.getBool("auto_backup_local")) {
       AppLog.info("准备本地自动备份");
-      BackupUtil.backup(
+      runBackupWithProgress(
         localBackupDirPath:
             SPUtil.getString("backup_local_dir", defaultValue: "unset"),
         showToastFlag: false,
         automatic: true,
+        progressScope: 'local',
       );
     }
 
@@ -74,10 +165,11 @@ class BackupService extends GetxService {
     // 如果设置为打开时备份
     if (curRemoteBackupModeName == BackupMode.backupAfterOpenApp.name) {
       AppLog.info("准备dav自动备份");
-      BackupUtil.backup(
+      runBackupWithProgress(
         remoteBackupDirPath: await WebDavUtil.getRemoteBackupDirPath(),
         showToastFlag: false,
         automatic: true,
+        progressScope: 'remote',
       );
     }
     // 如果设置为打开时还原远程最新数据
@@ -205,7 +297,13 @@ class BackupService extends GetxService {
         clickClose: false,
         task: () async {
           // await Future.delayed(const Duration(seconds: 2));
-          return BackupUtil.autoBackupRemote();
+          await runBackupWithProgress(
+            remoteBackupDirPath: await WebDavUtil.getRemoteBackupDirPath(),
+            showToastFlag: false,
+            automatic: true,
+            progressScope: 'remote',
+          );
+          return Result.success(true, msg: '远程备份完成');
         },
         onTaskSuccess: (taskValue) {
           if (taskValue.isSuccess) {

@@ -24,6 +24,8 @@ class SyncService extends GetxController {
   static SyncService get to => Get.find();
 
   bool isSyncing = false;
+  double syncProgress = 0;
+  String syncProgressText = '';
   final String syncInfoFileName = "sync_info.json";
   final String dbPayloadFileName = "sync_db_backup.db";
   final String imageIndexFileName = "sync_images_index.json";
@@ -71,20 +73,20 @@ class SyncService extends GetxController {
   set lastSyncedChangeLogId(int val) =>
       SPUtil.setInt("last_synced_change_log_id", val);
 
-    String get lastDeltaFallbackReason =>
+  String get lastDeltaFallbackReason =>
       SPUtil.getString("last_delta_fallback_reason");
-    set lastDeltaFallbackReason(String val) =>
+  set lastDeltaFallbackReason(String val) =>
       SPUtil.setString("last_delta_fallback_reason", val);
 
-    int get lastDeltaFallbackTime =>
+  int get lastDeltaFallbackTime =>
       SPUtil.getInt("last_delta_fallback_time", defaultValue: 0);
-    set lastDeltaFallbackTime(int val) =>
+  set lastDeltaFallbackTime(int val) =>
       SPUtil.setInt("last_delta_fallback_time", val);
 
-      bool get needDeltaChainRebase =>
-        SPUtil.getBool("need_delta_chain_rebase", defaultValue: false);
-      set needDeltaChainRebase(bool val) =>
-        SPUtil.setBool("need_delta_chain_rebase", val);
+  bool get needDeltaChainRebase =>
+      SPUtil.getBool("need_delta_chain_rebase", defaultValue: false);
+  set needDeltaChainRebase(bool val) =>
+      SPUtil.setBool("need_delta_chain_rebase", val);
 
   /// 启动时检查同步
   Future<void> checkAndSyncOnStart() async {
@@ -174,11 +176,13 @@ class SyncService extends GetxController {
     }
 
     isSyncing = true;
+    _setSyncProgress(0.02, '正在准备同步');
     update();
 
     try {
       final String writeRemoteDir = await WebDavUtil.getRemoteSyncDirPath();
       if (writeRemoteDir.isEmpty) return;
+      _setSyncProgress(0.08, '已连接同步目录');
 
       final String writeRemoteInfoPath = "$writeRemoteDir/$syncInfoFileName";
       final String writeRemotePayloadPath =
@@ -186,13 +190,16 @@ class SyncService extends GetxController {
 
       // 1. 读取所有兼容目录中的同步元数据，选取最新版本作为比较基准。
       final remoteSnapshot = await _loadLatestRemoteSnapshot();
+      _setSyncProgress(0.18, '正在读取云端快照');
       final SyncVersionModel? remoteModel = remoteSnapshot?.model;
       final String? remotePayloadPath = remoteSnapshot?.payloadPath;
       final String? remotePayloadDir = remoteSnapshot?.remoteDir;
 
       if (remoteModel == null) {
         AppLog.info("同步：远程无元数据，准备首次上传");
+        _setSyncProgress(0.3, '云端无数据，正在首次上传');
         await uploadLocalData(writeRemoteInfoPath, writeRemotePayloadPath);
+        _setSyncProgress(1.0, '首次同步完成');
         if (showToast) ToastUtil.showText("首次同步上传成功");
         return;
       }
@@ -213,6 +220,7 @@ class SyncService extends GetxController {
         localImageIndexDigest: localImageIndexDigest,
       );
       final bool crossDevice = remoteModel.deviceId != Global.deviceId;
+      _setSyncProgress(0.32, '正在比较本地与云端变更');
 
       AppLog.info(
         "同步：remoteChanged=$remoteChanged, localChanged=$localChanged, crossDevice=$crossDevice, localDbModifiedTime=$localDbModifiedTime",
@@ -225,6 +233,7 @@ class SyncService extends GetxController {
           localChanged &&
           crossDevice) {
         _setConflict(remoteModel, localDbModifiedTime);
+        _setSyncProgress(1.0, '检测到冲突，等待手动处理');
         AppLog.warn("同步冲突：检测到本地与远程都发生了更新，已暂停自动覆盖");
         if (showToast) {
           ToastUtil.showText("检测到多设备同步冲突，请在同步卡片中手动选择处理方式");
@@ -233,6 +242,7 @@ class SyncService extends GetxController {
       }
 
       if (forceDownload || (remoteChanged && !localChanged)) {
+        _setSyncProgress(0.45, '检测到云端更新，正在下载');
         if (remotePayloadPath == null || remotePayloadPath.isEmpty) {
           throw "远程同步文件路径不存在";
         }
@@ -245,8 +255,10 @@ class SyncService extends GetxController {
         if (showToast) {
           ToastUtil.showText("已同步云端最新数据（来自 ${remoteModel.deviceName}）");
         }
+        _setSyncProgress(1.0, '同步完成');
       } else if (forceUpload || (!remoteChanged && localChanged)) {
         AppLog.info("同步：本地数据较新，准备上传");
+        _setSyncProgress(0.45, '检测到本地更新，正在上传');
         await uploadLocalData(
           writeRemoteInfoPath,
           writeRemotePayloadPath,
@@ -255,6 +267,7 @@ class SyncService extends GetxController {
           localImageIndexDigest: localImageIndexDigest,
         );
         if (showToast) ToastUtil.showText("已上传本地最新数据到云端");
+        _setSyncProgress(1.0, '同步完成');
       } else if (remoteChanged && localChanged) {
         // 同设备冲突或强制分支外场景：比较时间戳，较新方覆盖。
         if (remoteModel.lastUpdateTime >= localDbModifiedTime) {
@@ -270,7 +283,9 @@ class SyncService extends GetxController {
           if (showToast) {
             ToastUtil.showText("已同步云端最新数据（来自 ${remoteModel.deviceName}）");
           }
+          _setSyncProgress(1.0, '同步完成');
         } else {
+          _setSyncProgress(0.45, '双端变更，正在以上传为准同步');
           await uploadLocalData(
             writeRemoteInfoPath,
             writeRemotePayloadPath,
@@ -279,18 +294,27 @@ class SyncService extends GetxController {
             localImageIndexDigest: localImageIndexDigest,
           );
           if (showToast) ToastUtil.showText("已上传本地最新数据到云端");
+          _setSyncProgress(1.0, '同步完成');
         }
       } else {
         AppLog.info("同步：数据已是最新");
+        _setSyncProgress(1.0, '数据已是最新');
         if (showToast) ToastUtil.showText("数据已是最新");
       }
     } catch (e) {
       AppLog.error("同步失败: $e");
+      _setSyncProgress(syncProgress <= 0 ? 0 : syncProgress, '同步失败: $e');
       if (showToast) ToastUtil.showError("同步失败: $e");
     } finally {
       isSyncing = false;
       update();
     }
+  }
+
+  void _setSyncProgress(double progress, String text) {
+    syncProgress = progress.clamp(0, 1).toDouble();
+    syncProgressText = text;
+    update();
   }
 
   /// 上传本地数据到云端
@@ -301,6 +325,7 @@ class SyncService extends GetxController {
     Map<String, Map<String, dynamic>>? localImageIndex,
     String? localImageIndexDigest,
   }) async {
+    _setSyncProgress(0.52, '正在整理本地变更');
     final String dbPath = await SqliteUtil.getDBPath();
     final File dbFile = File(dbPath);
     final String payloadDigest = await _buildPayloadDigest(dbFile);
@@ -343,6 +368,7 @@ class SyncService extends GetxController {
         remoteModel.payloadDigest != payloadDigest ||
         remoteModel.payloadFileName != dbPayloadFileName;
     if (needUploadDb) {
+      _setSyncProgress(0.62, '正在上传数据库');
       await _withRetry(
         () => WebDavUtil.upload(dbPath, remotePayloadPath),
         actionName: '上传数据库文件',
@@ -352,9 +378,11 @@ class SyncService extends GetxController {
     final bool needSyncImages =
         remoteModel == null || remoteModel.imageIndexDigest != imageDigest;
     if (needSyncImages) {
+      _setSyncProgress(0.72, '正在同步图片资源');
       await _syncImagesToRemoteFast(remoteDir, localIndex: imageIndex);
     }
 
+    _setSyncProgress(0.82, '正在上传增量清单');
     await _withRetry(
       () =>
           WebDavUtil.uploadString(jsonEncode(deltaManifest), deltaManifestPath),
@@ -383,6 +411,7 @@ class SyncService extends GetxController {
       () => WebDavUtil.uploadString(model.toJsonString(), remoteInfoPath),
       actionName: '上传同步元数据',
     );
+    _setSyncProgress(0.95, '正在保存同步状态');
 
     // 更新本地同步记录
     lastLocalSyncTime = model.lastUpdateTime;
@@ -399,6 +428,7 @@ class SyncService extends GetxController {
     SyncVersionModel remoteModel, {
     bool showDeltaFallbackToast = false,
   }) async {
+    _setSyncProgress(0.55, '正在下载云端数据');
     final tempDir = await getTemporaryDirectory();
     final String deltaManifestPath = "$remoteDir/$deltaManifestFileName";
     final bool isZipPayload = remotePayloadPath.toLowerCase().endsWith('.zip');
@@ -411,6 +441,7 @@ class SyncService extends GetxController {
       () => WebDavUtil.client.read2File(remotePayloadPath, tempPayloadPath),
       actionName: '下载同步文件',
     );
+    _setSyncProgress(0.7, '正在校验同步文件');
 
     // 简单校验
     final payloadFile = File(tempPayloadPath);
@@ -427,6 +458,7 @@ class SyncService extends GetxController {
     Result? result;
     if (isZipPayload) {
       // 兼容旧版 zip 同步包。
+      _setSyncProgress(0.78, '正在恢复旧版同步包');
       result = await BackupUtil.restoreFromLocal(
         tempPayloadPath,
         recordBeforeRestore: true,
@@ -510,6 +542,7 @@ class SyncService extends GetxController {
         }
 
         if (result.isSuccess) {
+          _setSyncProgress(0.9, '增量应用成功，正在同步图片');
           _clearDeltaFallbackStatus();
           await _syncMissingImagesFromRemote(remoteDir);
           lastLocalSyncTime = remoteModel.lastUpdateTime;
@@ -546,6 +579,7 @@ class SyncService extends GetxController {
       if (canSkipDbRestore) {
         result = Result.success(true, msg: "本地数据库已是最新");
       } else {
+        _setSyncProgress(0.85, '正在恢复数据库');
         result = await BackupUtil.restoreFromLocal(
           tempPayloadPath,
           recordBeforeRestore: true,
@@ -556,6 +590,7 @@ class SyncService extends GetxController {
 
     if (result.isSuccess) {
       // DB 恢复成功后，仅补齐缺失图片，避免全量重传/覆盖。
+      _setSyncProgress(0.93, '正在补齐图片资源');
       await _syncMissingImagesFromRemote(remoteDir);
       lastLocalSyncTime = remoteModel.lastUpdateTime;
       if (remoteModel.imageIndexDigest.isNotEmpty) {
@@ -613,7 +648,8 @@ class SyncService extends GetxController {
   }
 
   Future<_RemoteSyncSnapshot?> _loadLatestRemoteSnapshot() async {
-    final List<String> remoteDirs = await WebDavUtil.getRemoteSyncDirPathsForRead();
+    final List<String> remoteDirs =
+        await WebDavUtil.getRemoteSyncDirPathsForRead();
     _RemoteSyncSnapshot? latest;
 
     for (final remoteDir in remoteDirs) {

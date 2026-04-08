@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
@@ -27,6 +28,20 @@ class BackupUtil {
   static String backupZipNamePrefix = "backup";
   static String descFileName = "desc";
   static int rbrMaxCnt = 20;
+  static const double _minProgress = 0.0;
+  static const double _maxProgress = 1.0;
+
+  static void _reportProgress(
+    void Function(double progress, String message)? onProgress,
+    double progress,
+    String message,
+  ) {
+    if (onProgress == null) {
+      return;
+    }
+    final double safeProgress = progress.clamp(_minProgress, _maxProgress);
+    onProgress(safeProgress, message);
+  }
 
   /// 备份时，用于生成文件名
   static Future<String> generateZipName() async {
@@ -42,84 +57,239 @@ class BackupUtil {
   }
 
   /// 创建临时备份文件（包含数据库、图片和描述信息）
-  static Future<File> createTempBackUpFile(String zipName) async {
-    var encoder = ZipFileEncoder();
+  static Future<File> createTempBackUpFile(
+    String zipName, {
+    void Function(double progress, String message)? onProgress,
+  }) async {
     String dirPath = (await getTemporaryDirectory()).path;
+    final String resolvedDbPath = await SqliteUtil.getDBPath();
 
     String tempZipFilePath = "$dirPath/$zipName";
+    String noteImageDir = ImageUtil.getNoteImageRootDirPath();
+    String journalImageDir = ImageUtil.getJournalImageRootDirPath();
+    String coverImageDir = ImageUtil.getCoverImageRootDirPath();
+    final String checklistDesc = ChecklistController.to.desc;
+    final int historyCount = await HistoryDao.getCount();
+
+    _reportProgress(onProgress, 0.05, "正在准备备份文件");
+    if (Platform.isWindows) {
+      _reportProgress(onProgress, 0.1, "正在后台压缩备份包");
+      final counts = await Isolate.run(() {
+        return _createZipOnBackground(
+          tempZipFilePath: tempZipFilePath,
+          dbPath: resolvedDbPath,
+          noteImageDir: noteImageDir,
+          journalImageDir: journalImageDir,
+          coverImageDir: coverImageDir,
+          checklistDesc: checklistDesc,
+          historyCount: historyCount,
+        );
+      });
+      AppLog.info("✓ 备份笔记图片 (${counts['note'] ?? 0} 个文件)");
+      AppLog.info("✓ 备份日记图片 (${counts['journal'] ?? 0} 个文件)");
+      AppLog.info("✓ 备份封面图片 (${counts['cover'] ?? 0} 个文件)");
+      _reportProgress(onProgress, 1.0, "备份包生成完成");
+      return File(tempZipFilePath);
+    }
+
+    var encoder = ZipFileEncoder();
     encoder.create(tempZipFilePath);
 
     // 1. 添加数据库文件
-    encoder.addFile(File(SqliteUtil.dbPath));
+    encoder.addFile(File(resolvedDbPath));
     AppLog.info("✓ 备份数据库文件");
+    _reportProgress(onProgress, 0.2, "已打包数据库");
 
     // 2. 添加笔记图片文件夹
-    String noteImageDir = ImageUtil.getNoteImageRootDirPath();
     int noteImageCount = 0;
-    if (Directory(noteImageDir).existsSync()) {
-      final files =
-          Directory(noteImageDir).listSync(recursive: true).whereType<File>();
-      noteImageCount = files.length;
-      _addDirectoryToZip(encoder, noteImageDir, "images/note_images/");
+    final List<File> noteFiles = await _listFilesRecursively(noteImageDir);
+    if (noteFiles.isNotEmpty) {
+      noteImageCount = noteFiles.length;
+      await _addFilesToZip(
+        encoder,
+        rootDir: noteImageDir,
+        files: noteFiles,
+        zipDirPrefix: "images/note_images/",
+        onProgress: onProgress,
+        progressStart: 0.22,
+        progressEnd: 0.4,
+        progressText: "正在打包笔记图片",
+      );
       AppLog.info("✓ 备份笔记图片 ($noteImageCount 个文件)");
     }
+    _reportProgress(onProgress, 0.4, "已处理笔记图片");
 
     // 2.5 添加日记图片文件夹
-    String journalImageDir = ImageUtil.getJournalImageRootDirPath();
     int journalImageCount = 0;
-    if (Directory(journalImageDir).existsSync()) {
-      final files = Directory(journalImageDir)
-          .listSync(recursive: true)
-          .whereType<File>();
-      journalImageCount = files.length;
-      _addDirectoryToZip(encoder, journalImageDir, "images/journal_images/");
+    final List<File> journalFiles =
+        await _listFilesRecursively(journalImageDir);
+    if (journalFiles.isNotEmpty) {
+      journalImageCount = journalFiles.length;
+      await _addFilesToZip(
+        encoder,
+        rootDir: journalImageDir,
+        files: journalFiles,
+        zipDirPrefix: "images/journal_images/",
+        onProgress: onProgress,
+        progressStart: 0.42,
+        progressEnd: 0.6,
+        progressText: "正在打包日记图片",
+      );
       AppLog.info("✓ 备份日记图片 ($journalImageCount 个文件)");
     }
+    _reportProgress(onProgress, 0.6, "已处理日记图片");
 
     // 3. 添加封面图片文件夹
-    String coverImageDir = ImageUtil.getCoverImageRootDirPath();
     int coverImageCount = 0;
-    if (Directory(coverImageDir).existsSync()) {
-      final files =
-          Directory(coverImageDir).listSync(recursive: true).whereType<File>();
-      coverImageCount = files.length;
-      _addDirectoryToZip(encoder, coverImageDir, "images/cover_images/");
+    final List<File> coverFiles = await _listFilesRecursively(coverImageDir);
+    if (coverFiles.isNotEmpty) {
+      coverImageCount = coverFiles.length;
+      await _addFilesToZip(
+        encoder,
+        rootDir: coverImageDir,
+        files: coverFiles,
+        zipDirPrefix: "images/cover_images/",
+        onProgress: onProgress,
+        progressStart: 0.62,
+        progressEnd: 0.75,
+        progressText: "正在打包封面图片",
+      );
       AppLog.info("✓ 备份封面图片 ($coverImageCount 个文件)");
     }
+    _reportProgress(onProgress, 0.75, "已处理封面图片");
 
     // 4. 添加描述信息
     File descFile = File("$dirPath/desc");
     String desc = "";
-    desc += "清单：${ChecklistController.to.desc}\n";
-    // 因为要打开历史页，才会创建HistoryController，所以此处可能还未创建，因此使用dao
-    desc += "历史：${await HistoryDao.getCount()}条记录\n";
+    desc += "清单：$checklistDesc\n";
+    desc += "历史：$historyCount条记录\n";
     desc += "笔记图片数：$noteImageCount\n";
     desc += "日记图片数：$journalImageCount\n";
     desc += "封面图片数：$coverImageCount";
     descFile.writeAsStringSync(desc);
     await encoder.addFile(descFile);
     AppLog.info("✓ 备份描述信息");
+    _reportProgress(onProgress, 0.9, "正在封装备份包");
 
     await encoder.close();
+    _reportProgress(onProgress, 1.0, "备份包生成完成");
     return File(tempZipFilePath);
   }
 
-  /// 递归添加目录到ZIP中
-  static void _addDirectoryToZip(
-      ZipFileEncoder encoder, String dirPath, String zipDirPrefix) {
-    Directory dir = Directory(dirPath);
-    if (!dir.existsSync()) return;
+  static Map<String, int> _createZipOnBackground({
+    required String tempZipFilePath,
+    required String dbPath,
+    required String noteImageDir,
+    required String journalImageDir,
+    required String coverImageDir,
+    required String checklistDesc,
+    required int historyCount,
+  }) {
+    final encoder = ZipFileEncoder();
+    encoder.create(tempZipFilePath);
+    encoder.addFile(File(dbPath));
 
-    List<FileSystemEntity> entities = dir.listSync(recursive: true);
-    for (var entity in entities) {
+    final int noteCount =
+        _addDirectoryToZipSync(encoder, noteImageDir, "images/note_images/");
+    final int journalCount = _addDirectoryToZipSync(
+        encoder, journalImageDir, "images/journal_images/");
+    final int coverCount =
+        _addDirectoryToZipSync(encoder, coverImageDir, "images/cover_images/");
+
+    final String dirPath = File(tempZipFilePath).parent.path;
+    final File descFile = File("$dirPath/desc");
+    final String desc = "清单：$checklistDesc\n"
+        "历史：$historyCount条记录\n"
+        "笔记图片数：$noteCount\n"
+        "日记图片数：$journalCount\n"
+        "封面图片数：$coverCount";
+    descFile.writeAsStringSync(desc);
+    encoder.addFile(descFile);
+    encoder.closeSync();
+
+    return {
+      'note': noteCount,
+      'journal': journalCount,
+      'cover': coverCount,
+    };
+  }
+
+  static int _addDirectoryToZipSync(
+    ZipFileEncoder encoder,
+    String dirPath,
+    String zipDirPrefix,
+  ) {
+    final dir = Directory(dirPath);
+    if (!dir.existsSync()) {
+      return 0;
+    }
+
+    int count = 0;
+    final entities = dir.listSync(recursive: true);
+    for (final entity in entities) {
+      if (entity is! File) {
+        continue;
+      }
+      String relativePath = entity.path.replaceFirst(dirPath, "");
+      if (relativePath.startsWith("/") || relativePath.startsWith("\\")) {
+        relativePath = relativePath.substring(1);
+      }
+      final String zipPath = zipDirPrefix + relativePath.replaceAll("\\", "/");
+      encoder.addFile(entity, zipPath);
+      count++;
+    }
+    return count;
+  }
+
+  /// 异步递归读取文件，避免 listSync 造成长时间阻塞。
+  static Future<List<File>> _listFilesRecursively(String dirPath) async {
+    final dir = Directory(dirPath);
+    if (!await dir.exists()) {
+      return <File>[];
+    }
+
+    final List<File> files = <File>[];
+    await for (final entity in dir.list(recursive: true, followLinks: false)) {
       if (entity is File) {
-        String relativePath = entity.path.replaceFirst(dirPath, "");
-        // 移除开头的分隔符
-        if (relativePath.startsWith("/") || relativePath.startsWith("\\")) {
-          relativePath = relativePath.substring(1);
-        }
-        String zipPath = zipDirPrefix + relativePath.replaceAll("\\", "/");
-        encoder.addFile(entity, zipPath);
+        files.add(entity);
+      }
+    }
+    return files;
+  }
+
+  /// 分批写入 ZIP，并周期性让出事件循环，提升 UI 响应。
+  static Future<void> _addFilesToZip(
+    ZipFileEncoder encoder, {
+    required String rootDir,
+    required List<File> files,
+    required String zipDirPrefix,
+    void Function(double progress, String message)? onProgress,
+    required double progressStart,
+    required double progressEnd,
+    required String progressText,
+  }) async {
+    if (files.isEmpty) {
+      return;
+    }
+
+    const int yieldEvery = 12;
+    for (int i = 0; i < files.length; i++) {
+      final File file = files[i];
+      String relativePath = file.path.replaceFirst(rootDir, "");
+      if (relativePath.startsWith("/") || relativePath.startsWith("\\")) {
+        relativePath = relativePath.substring(1);
+      }
+      final String zipPath = zipDirPrefix + relativePath.replaceAll("\\", "/");
+      encoder.addFile(file, zipPath);
+
+      final double percent = (i + 1) / files.length;
+      final double progress =
+          progressStart + (progressEnd - progressStart) * percent;
+      _reportProgress(
+          onProgress, progress, '$progressText (${i + 1}/${files.length})');
+
+      if ((i + 1) % yieldEvery == 0) {
+        await Future<void>.delayed(Duration.zero);
       }
     }
   }
@@ -144,11 +314,11 @@ class BackupUtil {
             .length
         : 0;
     int journalCount = Directory(journalImageDir).existsSync()
-      ? Directory(journalImageDir)
-        .listSync(recursive: true)
-        .whereType<File>()
-        .length
-      : 0;
+        ? Directory(journalImageDir)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .length
+        : 0;
     int coverCount = Directory(coverImageDir).existsSync()
         ? Directory(coverImageDir)
             .listSync(recursive: true)
@@ -225,10 +395,15 @@ class BackupUtil {
     String remoteBackupDirPath = "",
     bool showToastFlag = true,
     bool automatic = false,
+    void Function(double progress, String message)? onProgress,
   }) async {
+    _reportProgress(onProgress, 0.01, "开始备份");
     String zipName = await generateZipName();
     String versionId = generateVersionId();
-    File tempZipFile = await createTempBackUpFile(zipName);
+    File tempZipFile = await createTempBackUpFile(
+      zipName,
+      onProgress: onProgress,
+    );
 
     String? savedLocalPath;
 
@@ -244,11 +419,13 @@ class BackupUtil {
           localBackupFilePath = "$localBackupDirPath/$zipName";
         }
         await tempZipFile.copy(localBackupFilePath);
+        _reportProgress(onProgress, 0.96, "已保存到本地目录");
         savedLocalPath = localBackupFilePath;
         if (showToastFlag) ToastUtil.showText("本地备份成功");
         // 如果还要备份到webdav，则先不删除
         if (remoteBackupDirPath.isEmpty) {
           tempZipFile.delete();
+          _reportProgress(onProgress, 1.0, "本地备份完成");
           // 保存备份版本信息
           await saveSyncVersion(
             versionId: versionId,
@@ -280,6 +457,7 @@ class BackupUtil {
         remoteBackupFilePath = "$remoteBackupDirPath/$zipName";
       }
       await WebDavUtil.upload(tempZipFile.path, remoteBackupFilePath);
+      _reportProgress(onProgress, 0.98, "远程文件上传完成");
       SPUtil.setString(latestDavBackupFilePath, remoteBackupFilePath);
       if (showToastFlag) {
         ToastUtil.showText("远程备份成功");
@@ -297,6 +475,7 @@ class BackupUtil {
         localPath: savedLocalPath,
         remotePath: remoteBackupFilePath,
       );
+      _reportProgress(onProgress, 1.0, "远程备份完成");
 
       return remoteBackupFilePath;
       // 可以备份，但不是增量备份。
@@ -320,6 +499,7 @@ class BackupUtil {
       //   File(tempZipFilePath).delete();
       // });
     }
+    _reportProgress(onProgress, 1.0, "备份结束");
     return "";
   }
 
@@ -511,17 +691,21 @@ class BackupUtil {
         String? extractLegacyImagePath(String prefix, String baseDir) {
           final int idx = normalizedName.indexOf(prefix);
           if (idx < 0) return null;
-          final String relativePath = normalizedName.substring(idx + prefix.length);
+          final String relativePath =
+              normalizedName.substring(idx + prefix.length);
           return baseDir + relativePath;
         }
 
         // 根据文件类型确定实际保存路径
-        final notePath = extractLegacyImagePath('images/note_images/', noteImageDir) ??
-            extractLegacyImagePath('note_images/', noteImageDir);
-        final journalPath = extractLegacyImagePath('images/journal_images/', journalImageDir) ??
-            extractLegacyImagePath('journal_images/', journalImageDir);
-        final coverPath = extractLegacyImagePath('images/cover_images/', coverImageDir) ??
-            extractLegacyImagePath('cover_images/', coverImageDir);
+        final notePath =
+            extractLegacyImagePath('images/note_images/', noteImageDir) ??
+                extractLegacyImagePath('note_images/', noteImageDir);
+        final journalPath =
+            extractLegacyImagePath('images/journal_images/', journalImageDir) ??
+                extractLegacyImagePath('journal_images/', journalImageDir);
+        final coverPath =
+            extractLegacyImagePath('images/cover_images/', coverImageDir) ??
+                extractLegacyImagePath('cover_images/', coverImageDir);
 
         if (notePath != null) {
           actualFilePath = notePath;
@@ -539,9 +723,9 @@ class BackupUtil {
 
         // 检查是否已存在，如果是图片且已存在，根据overwriteImages决定
         bool isImageFile = normalizedName.startsWith("images/") ||
-          normalizedName.startsWith("note_images/") ||
-          normalizedName.startsWith("journal_images/") ||
-          normalizedName.startsWith("cover_images/");
+            normalizedName.startsWith("note_images/") ||
+            normalizedName.startsWith("journal_images/") ||
+            normalizedName.startsWith("cover_images/");
         if (isImageFile &&
             File(actualFilePath).existsSync() &&
             !overwriteImages) {
@@ -573,16 +757,20 @@ class BackupUtil {
         String? extractLegacyDirPath(String prefix, String baseDir) {
           final int idx = normalizedName.indexOf(prefix);
           if (idx < 0) return null;
-          final String relativePath = normalizedName.substring(idx + prefix.length);
+          final String relativePath =
+              normalizedName.substring(idx + prefix.length);
           return baseDir + relativePath;
         }
 
-        final noteDirPath = extractLegacyDirPath('images/note_images/', noteImageDir) ??
-            extractLegacyDirPath('note_images/', noteImageDir);
-        final journalDirPath = extractLegacyDirPath('images/journal_images/', journalImageDir) ??
-            extractLegacyDirPath('journal_images/', journalImageDir);
-        final coverDirPath = extractLegacyDirPath('images/cover_images/', coverImageDir) ??
-            extractLegacyDirPath('cover_images/', coverImageDir);
+        final noteDirPath =
+            extractLegacyDirPath('images/note_images/', noteImageDir) ??
+                extractLegacyDirPath('note_images/', noteImageDir);
+        final journalDirPath =
+            extractLegacyDirPath('images/journal_images/', journalImageDir) ??
+                extractLegacyDirPath('journal_images/', journalImageDir);
+        final coverDirPath =
+            extractLegacyDirPath('images/cover_images/', coverImageDir) ??
+                extractLegacyDirPath('cover_images/', coverImageDir);
 
         if (noteDirPath != null) {
           dirPath = Directory(noteDirPath);
@@ -676,7 +864,8 @@ class BackupUtil {
   static Future<List<dav_client.File>> getAllBackupFiles() async {
     List<dav_client.File> files = [];
 
-    final List<String> backupDirs = await WebDavUtil.getRemoteBackupDirPathsForRead();
+    final List<String> backupDirs =
+        await WebDavUtil.getRemoteBackupDirPathsForRead();
     if (backupDirs.isEmpty) {
       AppLog.info("远程备份路径为空");
       return [];

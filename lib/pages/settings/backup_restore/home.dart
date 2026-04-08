@@ -66,11 +66,12 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
                   syncService.pendingLocalDbModifiedTime)
               .toString()
               .substring(0, 19);
-        String deltaFallbackTimeStr = syncService.lastDeltaFallbackTime == 0
+      String deltaFallbackTimeStr = syncService.lastDeltaFallbackTime == 0
           ? "-"
-          : DateTime.fromMillisecondsSinceEpoch(syncService.lastDeltaFallbackTime)
-            .toString()
-            .substring(0, 19);
+          : DateTime.fromMillisecondsSinceEpoch(
+                  syncService.lastDeltaFallbackTime)
+              .toString()
+              .substring(0, 19);
 
       return SettingCard(
         title: '多设备同步 (WebDAV)',
@@ -127,7 +128,11 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
             ),
           ListTile(
             title: const Text("立即同步"),
-            subtitle: Text("上次同步: $syncTimeStr"),
+            subtitle: Text(syncService.isSyncing
+                ? (syncService.syncProgressText.isEmpty
+                    ? "同步进行中"
+                    : syncService.syncProgressText)
+                : "上次同步: $syncTimeStr"),
             trailing: syncService.isSyncing
                 ? const SizedBox(
                     width: 20,
@@ -142,6 +147,16 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
                     setState(() {});
                   },
           ),
+          if (syncService.isSyncing)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: LinearProgressIndicator(
+                value: syncService.syncProgress <= 0 ||
+                        syncService.syncProgress >= 1
+                    ? null
+                    : syncService.syncProgress,
+              ),
+            ),
           if (syncService.lastDeltaFallbackReason.isNotEmpty)
             ListTile(
               title: const Text("最近一次增量回退"),
