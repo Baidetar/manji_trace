@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:async';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/utils/image_util.dart';
@@ -98,12 +99,17 @@ class SqliteUtil {
   }
 
   static Future<String> getLocalRootDirPath() async {
-    String rootPath;
-    if (PlatformUtil.isMobile || Platform.isWindows) {
+    late String rootPath;
+    if (Platform.isAndroid) {
+      final externalDir = await getExternalStorageDirectory();
+      rootPath =
+          externalDir?.path ?? (await getApplicationSupportDirectory()).path;
+    } else if (Platform.isIOS || Platform.isWindows) {
       rootPath = (await getApplicationSupportDirectory()).path;
     } else {
       throw ("未适配平台：${Platform.operatingSystem}");
     }
+    await Directory(rootPath).create(recursive: true);
     return rootPath;
   }
 
@@ -113,6 +119,9 @@ class SqliteUtil {
 
   static Future<Database> _initDatabase() async {
     dbPath = await getDBPath();
+    if (Platform.isAndroid) {
+      await _migrateAndroidDbFromLegacyPathIfNeeded(dbPath);
+    }
     AppLog.info("💾 db path: $dbPath");
 
     if (PlatformUtil.isMobile) {
@@ -132,6 +141,47 @@ class SqliteUtil {
     } else {
       throw ("未适配平台：${Platform.operatingSystem}");
     }
+  }
+
+  static Future<void> _migrateAndroidDbFromLegacyPathIfNeeded(
+      String targetDbPath) async {
+    final legacyRoot = (await getApplicationSupportDirectory()).path;
+    final legacyDbPath = p.join(legacyRoot, sqlFileName);
+    if (legacyDbPath == targetDbPath) {
+      return;
+    }
+
+    final targetFile = File(targetDbPath);
+    if (await targetFile.exists()) {
+      return;
+    }
+
+    final legacyFile = File(legacyDbPath);
+    if (!await legacyFile.exists()) {
+      return;
+    }
+
+    await Directory(p.dirname(targetDbPath)).create(recursive: true);
+
+    try {
+      await legacyFile.rename(targetDbPath);
+    } catch (_) {
+      await legacyFile.copy(targetDbPath);
+    }
+
+    for (final suffix in ['-wal', '-shm']) {
+      final oldSidecar = File('$legacyDbPath$suffix');
+      final newSidecar = File('$targetDbPath$suffix');
+      if (await oldSidecar.exists() && !await newSidecar.exists()) {
+        try {
+          await oldSidecar.rename(newSidecar.path);
+        } catch (_) {
+          await oldSidecar.copy(newSidecar.path);
+        }
+      }
+    }
+
+    AppLog.info('Android数据库目录迁移完成: $legacyDbPath -> $targetDbPath');
   }
 
   static FutureOr<void> _createDb(Database db, int version) async {

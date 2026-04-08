@@ -5,6 +5,7 @@ import 'package:manji_trace/pages/settings/backup_restore/remote.dart';
 import 'package:manji_trace/pages/settings/pages/rbr_page.dart';
 import 'package:manji_trace/routes/get_route.dart';
 import 'package:manji_trace/utils/backup_util.dart';
+import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/utils/toast_util.dart';
 import 'package:manji_trace/controllers/sync_service.dart';
@@ -19,6 +20,36 @@ class BackupAndRestorePage extends StatefulWidget {
 }
 
 class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
+  String _dataRootPath = '';
+  String _dbPath = '';
+  String _noteImagePath = '';
+  String _journalImagePath = '';
+  String _coverImagePath = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDataPaths();
+  }
+
+  Future<void> _loadDataPaths() async {
+    final dataRootPath = await SqliteUtil.getLocalRootDirPath();
+    final dbPath = await SqliteUtil.getDBPath();
+    await ImageUtil.getInstance();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _dataRootPath = dataRootPath;
+      _dbPath = dbPath;
+      _noteImagePath = ImageUtil.getNoteImageRootDirPath();
+      _journalImagePath = ImageUtil.getJournalImageRootDirPath();
+      _coverImagePath = ImageUtil.getCoverImageRootDirPath();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,6 +61,7 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
           const LocalBackupPage(),
           const RemoteBackupPage(),
           _buildSyncCard(),
+          _buildDataPathCard(),
           SettingCard(
             title: '数据迁移',
             children: [
@@ -271,6 +303,35 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
               child: const Text("我已了解"))
         ],
       ),
+    );
+  }
+
+  Widget _buildDataPathCard() {
+    final bool isLoading = _dbPath.isEmpty;
+    return SettingCard(
+      title: '数据目录',
+      children: [
+        ListTile(
+          title: const Text('当前数据根目录'),
+          subtitle: Text(isLoading ? '读取中...' : _dataRootPath),
+        ),
+        ListTile(
+          title: const Text('数据库文件'),
+          subtitle: Text(isLoading ? '读取中...' : _dbPath),
+        ),
+        ListTile(
+          title: const Text('笔记图片目录'),
+          subtitle: Text(isLoading ? '读取中...' : _noteImagePath),
+        ),
+        ListTile(
+          title: const Text('日记图片目录'),
+          subtitle: Text(isLoading ? '读取中...' : _journalImagePath),
+        ),
+        ListTile(
+          title: const Text('封面图片目录'),
+          subtitle: Text(isLoading ? '读取中...' : _coverImagePath),
+        ),
+      ],
     );
   }
 }

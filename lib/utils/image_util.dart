@@ -23,26 +23,87 @@ class ImageUtil {
   static Future<void> initializePrivateDirs() async {
     try {
       final documentDir = await getApplicationDocumentsDirectory();
-      
-      noteImageRootDirPath = 
-          p.join(documentDir.path, _noteImageFolder) + p.separator;
-        journalImageRootDirPath = 
-          p.join(documentDir.path, _journalImageFolder) + p.separator;
-      coverImageRootDirPath = 
-          p.join(documentDir.path, _coverImageFolder) + p.separator;
-      
+      final baseDir = await _getImageBaseDir();
+
+      await _migrateLegacyImageDirsIfNeeded(
+        oldBasePath: documentDir.path,
+        newBasePath: baseDir.path,
+      );
+
+      noteImageRootDirPath =
+          p.join(baseDir.path, _noteImageFolder) + p.separator;
+      journalImageRootDirPath =
+          p.join(baseDir.path, _journalImageFolder) + p.separator;
+      coverImageRootDirPath =
+          p.join(baseDir.path, _coverImageFolder) + p.separator;
+
       // 创建目录如果不存在
       await Directory(noteImageRootDirPath).create(recursive: true);
-        await Directory(journalImageRootDirPath).create(recursive: true);
+      await Directory(journalImageRootDirPath).create(recursive: true);
       await Directory(coverImageRootDirPath).create(recursive: true);
-      
+
       AppLog.info("图片私有目录初始化完成");
       AppLog.info("笔记图片目录: $noteImageRootDirPath");
-        AppLog.info("日记图片目录: $journalImageRootDirPath");
+      AppLog.info("日记图片目录: $journalImageRootDirPath");
       AppLog.info("封面图片目录: $coverImageRootDirPath");
     } catch (e) {
       AppLog.error("初始化图片私有目录失败: $e");
       rethrow;
+    }
+  }
+
+  static Future<Directory> _getImageBaseDir() async {
+    if (Platform.isAndroid) {
+      final externalDir = await getExternalStorageDirectory();
+      if (externalDir != null) {
+        return externalDir;
+      }
+    }
+    return getApplicationDocumentsDirectory();
+  }
+
+  static Future<void> _migrateLegacyImageDirsIfNeeded({
+    required String oldBasePath,
+    required String newBasePath,
+  }) async {
+    if (!Platform.isAndroid || oldBasePath == newBasePath) {
+      return;
+    }
+
+    await _migrateOneImageDir(_noteImageFolder, oldBasePath, newBasePath);
+    await _migrateOneImageDir(_journalImageFolder, oldBasePath, newBasePath);
+    await _migrateOneImageDir(_coverImageFolder, oldBasePath, newBasePath);
+  }
+
+  static Future<void> _migrateOneImageDir(
+    String folder,
+    String oldBasePath,
+    String newBasePath,
+  ) async {
+    final oldDir = Directory(p.join(oldBasePath, folder));
+    if (!await oldDir.exists()) {
+      return;
+    }
+
+    final newDir = Directory(p.join(newBasePath, folder));
+    if (!await newDir.exists()) {
+      await newDir.create(recursive: true);
+    }
+
+    await for (final entity
+        in oldDir.list(recursive: true, followLinks: false)) {
+      if (entity is! File) {
+        continue;
+      }
+
+      final relativePath = p.relative(entity.path, from: oldDir.path);
+      final targetPath = p.join(newDir.path, relativePath);
+      final targetFile = File(targetPath);
+      if (await targetFile.exists()) {
+        continue;
+      }
+      await Directory(p.dirname(targetPath)).create(recursive: true);
+      await entity.copy(targetPath);
     }
   }
 
