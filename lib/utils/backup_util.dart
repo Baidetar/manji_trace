@@ -601,6 +601,8 @@ class BackupUtil {
       try {
         await unzip(localBackupFilePath, overwriteImages: overwriteImages);
         await SqliteUtil.ensureDBTable();
+        // 还原后清理“有记录但文件不存在”的图片，避免显示损坏占位图。
+        await SqliteUtil.cleanupMissingImageRows();
         if (delete) File(localBackupFilePath).delete();
         restoreOk = true;
       } catch (e) {

@@ -229,11 +229,14 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
               TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    int dataCount = await SqliteUtil.migrateOldImageData();
+                    int dataCount = await SqliteUtil.migrateOldImageData(
+                        includeAmbiguousConflicts: true);
                     int fileCount =
                         await SqliteUtil.migrateJournalImageFilesToNewRoot();
+                    int cleanupCount =
+                        await SqliteUtil.cleanupMissingImageRows();
                     ToastUtil.showText(
-                        "修复完成，共处理 ${dataCount + fileCount} 项旧数据/图片");
+                        "修复完成，共处理 ${dataCount + fileCount + cleanupCount} 项旧数据/图片");
                   },
                   child: const Text("确定")),
             ],

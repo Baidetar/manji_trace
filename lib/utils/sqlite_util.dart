@@ -384,7 +384,9 @@ class SqliteUtil {
         tableName: 'image', columnName: 'order_idx', columnType: 'INTEGER');
   }
 
-  static Future<int> migrateOldImageData() async {
+  static Future<int> migrateOldImageData({
+    bool includeAmbiguousConflicts = false,
+  }) async {
     AppLog.info("sql: migrateOldImageData");
     String now = DateTime.now().toString().substring(0, 19);
     await database.rawUpdate('''
@@ -406,26 +408,58 @@ class SqliteUtil {
       AND note_id NOT IN (SELECT note_id FROM episode_note);
     ''');
 
-    var conflictRows = await database.rawQuery('''
+    int duplicatedCount = 0;
+    if (includeAmbiguousConflicts) {
+      var conflictRows = await database.rawQuery('''
       SELECT * FROM image WHERE note_type = 0 AND note_id IN (SELECT id FROM journal_note) 
       AND note_id IN (SELECT note_id FROM episode_note);
     ''');
 
-    int duplicatedCount = 0;
-    for (var row in conflictRows) {
-      var exist = await database.rawQuery('''
+      for (var row in conflictRows) {
+        var exist = await database.rawQuery('''
         SELECT image_id FROM image WHERE note_id = ${row['note_id']} 
         AND image_local_path = '${row['image_local_path']}' AND note_type = ${NoteType.journal.value}
       ''');
-      if (exist.isEmpty) {
-        await database.rawInsert('''
+        if (exist.isEmpty) {
+          await database.rawInsert('''
           INSERT INTO image (note_id, image_local_path, order_idx, note_type)
           VALUES (${row['note_id']}, '${row['image_local_path']}', ${row['order_idx'] ?? 0}, ${NoteType.journal.value});
         ''');
-        duplicatedCount++;
+          duplicatedCount++;
+        }
       }
+    } else {
+      AppLog.info('跳过歧义ID图片迁移，避免将番剧图片误挂到日记');
     }
     return movedCount + duplicatedCount;
+  }
+
+  static Future<int> cleanupMissingImageRows() async {
+    AppLog.info("sql: cleanupMissingImageRows");
+    final rows = await database.rawQuery(
+      'SELECT image_id, image_local_path, note_type FROM image',
+    );
+
+    int removedCount = 0;
+    for (final row in rows) {
+      final int imageId = row['image_id'] as int? ?? 0;
+      final String relativePath = row['image_local_path'] as String? ?? '';
+      final int noteType = row['note_type'] as int? ?? NoteType.episode.value;
+      if (imageId <= 0 || relativePath.isEmpty) {
+        continue;
+      }
+
+      final String absolutePath = noteType == NoteType.journal.value
+          ? ImageUtil.getAbsoluteJournalImagePath(relativePath)
+          : ImageUtil.getAbsoluteNoteImagePath(relativePath);
+      if (!File(absolutePath).existsSync()) {
+        await database
+            .rawDelete('DELETE FROM image WHERE image_id = ?', [imageId]);
+        removedCount++;
+      }
+    }
+    AppLog.info('清理无效图片记录完成: $removedCount');
+    return removedCount;
   }
 
   static Future<int> migrateJournalImageFilesToNewRoot() async {
@@ -443,8 +477,10 @@ class SqliteUtil {
         continue;
       }
 
-      final String legacyPath = ImageUtil.getAbsoluteNoteImagePath(relativePath);
-      final String targetPath = ImageUtil.getAbsoluteJournalImagePath(relativePath);
+      final String legacyPath =
+          ImageUtil.getAbsoluteNoteImagePath(relativePath);
+      final String targetPath =
+          ImageUtil.getAbsoluteJournalImagePath(relativePath);
       final legacyFile = File(legacyPath);
       final targetFile = File(targetPath);
 
