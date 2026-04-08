@@ -9,9 +9,10 @@ import 'package:manji_trace/values/values.dart';
 // 使用：笔记列表页
 class NoteImgGrid extends StatelessWidget {
   final List<RelativeLocalImage> relativeLocalImages;
+  final bool isJournalImage;
   final limitShowImageNum = true;
 
-  const NoteImgGrid({Key? key, required this.relativeLocalImages})
+  const NoteImgGrid({Key? key, required this.relativeLocalImages, this.isJournalImage = false})
       : super(key: key);
 
   bool get useFillStyle => false;
@@ -102,6 +103,7 @@ class NoteImgGrid extends StatelessWidget {
                   useCustomAspectRatio: true,
                   aspectRatio: childAspectRatio,
                   relativeLocalImages: relativeLocalImages,
+                  isJournalImage: isJournalImage,
                   initialIndex: 0,
                 ),
                 SizedBox(height: AppTheme.noteImageSpacing),
@@ -109,6 +111,7 @@ class NoteImgGrid extends StatelessWidget {
                   useCustomAspectRatio: true,
                   aspectRatio: childAspectRatio,
                   relativeLocalImages: relativeLocalImages,
+                  isJournalImage: isJournalImage,
                   initialIndex: 1,
                 )
               ],
@@ -120,6 +123,7 @@ class NoteImgGrid extends StatelessWidget {
             useCustomAspectRatio: true,
             aspectRatio: 4 / (3 * 2),
             relativeLocalImages: relativeLocalImages,
+            isJournalImage: isJournalImage,
             initialIndex: 2,
           ))
         ],
@@ -168,6 +172,7 @@ class NoteImgGrid extends StatelessWidget {
             useCustomAspectRatio: useFillStyle,
             aspectRatio: childAspectRatio,
             relativeLocalImages: relativeLocalImages,
+          isJournalImage: isJournalImage,
             initialIndex: index,
             // 避免穿透到卡片笔记长按效果
             onLongPress: () {},

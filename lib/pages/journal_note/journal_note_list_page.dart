@@ -167,7 +167,10 @@ class _JournalNoteListPageState extends State<JournalNoteListPage> {
               ),
             ),
             if (hasImages)
-              NoteImgGrid(relativeLocalImages: note.relativeLocalImages),
+              NoteImgGrid(
+                relativeLocalImages: note.relativeLocalImages,
+                isJournalImage: true,
+              ),
             if (!hasImages) const SizedBox(height: 5),
           ],
         ),

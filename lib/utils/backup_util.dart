@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:archive/archive_io.dart';
 import 'package:manji_trace/controllers/labels_controller.dart';
@@ -47,31 +48,45 @@ class BackupUtil {
 
     String tempZipFilePath = "$dirPath/$zipName";
     encoder.create(tempZipFilePath);
-    
+
     // 1. 添加数据库文件
     encoder.addFile(File(SqliteUtil.dbPath));
     AppLog.info("✓ 备份数据库文件");
-    
+
     // 2. 添加笔记图片文件夹
     String noteImageDir = ImageUtil.getNoteImageRootDirPath();
     int noteImageCount = 0;
     if (Directory(noteImageDir).existsSync()) {
-      final files = Directory(noteImageDir).listSync(recursive: true).whereType<File>();
+      final files =
+          Directory(noteImageDir).listSync(recursive: true).whereType<File>();
       noteImageCount = files.length;
       _addDirectoryToZip(encoder, noteImageDir, "images/note_images/");
       AppLog.info("✓ 备份笔记图片 ($noteImageCount 个文件)");
     }
-    
+
+    // 2.5 添加日记图片文件夹
+    String journalImageDir = ImageUtil.getJournalImageRootDirPath();
+    int journalImageCount = 0;
+    if (Directory(journalImageDir).existsSync()) {
+      final files = Directory(journalImageDir)
+          .listSync(recursive: true)
+          .whereType<File>();
+      journalImageCount = files.length;
+      _addDirectoryToZip(encoder, journalImageDir, "images/journal_images/");
+      AppLog.info("✓ 备份日记图片 ($journalImageCount 个文件)");
+    }
+
     // 3. 添加封面图片文件夹
     String coverImageDir = ImageUtil.getCoverImageRootDirPath();
     int coverImageCount = 0;
     if (Directory(coverImageDir).existsSync()) {
-      final files = Directory(coverImageDir).listSync(recursive: true).whereType<File>();
+      final files =
+          Directory(coverImageDir).listSync(recursive: true).whereType<File>();
       coverImageCount = files.length;
       _addDirectoryToZip(encoder, coverImageDir, "images/cover_images/");
       AppLog.info("✓ 备份封面图片 ($coverImageCount 个文件)");
     }
-    
+
     // 4. 添加描述信息
     File descFile = File("$dirPath/desc");
     String desc = "";
@@ -79,6 +94,7 @@ class BackupUtil {
     // 因为要打开历史页，才会创建HistoryController，所以此处可能还未创建，因此使用dao
     desc += "历史：${await HistoryDao.getCount()}条记录\n";
     desc += "笔记图片数：$noteImageCount\n";
+    desc += "日记图片数：$journalImageCount\n";
     desc += "封面图片数：$coverImageCount";
     descFile.writeAsStringSync(desc);
     await encoder.addFile(descFile);
@@ -87,12 +103,13 @@ class BackupUtil {
     await encoder.close();
     return File(tempZipFilePath);
   }
-  
+
   /// 递归添加目录到ZIP中
-  static void _addDirectoryToZip(ZipFileEncoder encoder, String dirPath, String zipDirPrefix) {
+  static void _addDirectoryToZip(
+      ZipFileEncoder encoder, String dirPath, String zipDirPrefix) {
     Directory dir = Directory(dirPath);
     if (!dir.existsSync()) return;
-    
+
     List<FileSystemEntity> entities = dir.listSync(recursive: true);
     for (var entity in entities) {
       if (entity is File) {
@@ -106,52 +123,68 @@ class BackupUtil {
       }
     }
   }
-  
+
   /// 生成版本ID（时间戳+随机数）
   static String generateVersionId() {
     String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     String random = DateTime.now().microsecond.toString().padLeft(6, '0');
     return "v_${timestamp}_$random";
   }
-  
+
   /// 获取当前备份的统计信息
   static Future<Map<String, dynamic>> getBackupStats() async {
     String noteImageDir = ImageUtil.getNoteImageRootDirPath();
+    String journalImageDir = ImageUtil.getJournalImageRootDirPath();
     String coverImageDir = ImageUtil.getCoverImageRootDirPath();
-    
+
     int noteCount = Directory(noteImageDir).existsSync()
-        ? Directory(noteImageDir).listSync(recursive: true).whereType<File>().length
+        ? Directory(noteImageDir)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .length
         : 0;
+    int journalCount = Directory(journalImageDir).existsSync()
+      ? Directory(journalImageDir)
+        .listSync(recursive: true)
+        .whereType<File>()
+        .length
+      : 0;
     int coverCount = Directory(coverImageDir).existsSync()
-        ? Directory(coverImageDir).listSync(recursive: true).whereType<File>().length
+        ? Directory(coverImageDir)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .length
         : 0;
-    
+
     return {
-      'recordCount': int.tryParse(ChecklistController.to.desc.split("/")[0].trim()) ?? 0,
+      'recordCount':
+          int.tryParse(ChecklistController.to.desc.split("/")[0].trim()) ?? 0,
       'labelCount': await LabelDao.getAllLabels().then((list) => list.length),
       'noteImageCount': noteCount,
+      'journalImageCount': journalCount,
       'coverImageCount': coverCount,
     };
   }
-  
+
   /// 保存备份版本信息到数据库
   static Future<void> saveSyncVersion({
     required String versionId,
     required String backupMode, // 'full' or 'incremental'
-    required String source,     // 'manual', 'automatic', 'sync'
+    required String source, // 'manual', 'automatic', 'sync'
     String? localPath,
     String? remotePath,
   }) async {
     try {
       final stats = await getBackupStats();
       int versionNumber = 1;
-      
+
       // 获取最新的版本号
-      final allVersions = await SqliteSyncUtil.getAllSyncVersions(SqliteUtil.database);
+      final allVersions =
+          await SqliteSyncUtil.getAllSyncVersions(SqliteUtil.database);
       if (allVersions.isNotEmpty) {
         versionNumber = allVersions.first.versionNumber + 1;
       }
-      
+
       final version = SyncVersion(
         id: versionId,
         versionNumber: versionNumber,
@@ -168,7 +201,7 @@ class BackupUtil {
         localPath: localPath,
         remotePath: remotePath,
       );
-      
+
       await SqliteSyncUtil.insertSyncVersion(SqliteUtil.database, version);
       AppLog.info("✓ 备份版本信息已保存: $versionId");
     } catch (e) {
@@ -178,7 +211,7 @@ class BackupUtil {
 
   static Future<Result> autoBackupRemote() async {
     await BackupUtil.backup(
-      remoteBackupDirPath: await WebDavUtil.getRemoteDirPath(),
+      remoteBackupDirPath: await WebDavUtil.getRemoteBackupDirPath(),
       showToastFlag: false,
       automatic: true,
     );
@@ -196,7 +229,7 @@ class BackupUtil {
     String zipName = await generateZipName();
     String versionId = generateVersionId();
     File tempZipFile = await createTempBackUpFile(zipName);
-    
+
     String? savedLocalPath;
 
     if (localBackupDirPath.isNotEmpty) {
@@ -253,8 +286,9 @@ class BackupUtil {
       }
       // 因为之前upload里的上传没有await，导致还没有上传完毕就删除了文件。从而导致上传失败
       tempZipFile.delete();
-      deleteOldAutoBackupFileFromRemote(remoteBackupDirPath); // 删除自动备份中超过用户备份数量的文件
-      
+      deleteOldAutoBackupFileFromRemote(
+          remoteBackupDirPath); // 删除自动备份中超过用户备份数量的文件
+
       // 保存备份版本信息
       await saveSyncVersion(
         versionId: versionId,
@@ -263,7 +297,7 @@ class BackupUtil {
         localPath: savedLocalPath,
         remotePath: remoteBackupFilePath,
       );
-      
+
       return remoteBackupFilePath;
       // 可以备份，但不是增量备份。
       // ！无法还原：Unhandled Exception: FormatException: Could not find End of Central Directory Record
@@ -290,7 +324,13 @@ class BackupUtil {
   }
 
   static deleteOldAutoBackupFileFromRemote(String autoBackupDirPath) async {
-    var files = await WebDavUtil.client.readDir("/manji_trace/automatic");
+    final String autoDirPath = "$autoBackupDirPath/automatic";
+    List<dav_client.File> files = [];
+    try {
+      files = await WebDavUtil.client.readDir(autoDirPath);
+    } catch (_) {
+      return;
+    }
     files.sort((a, b) {
       return a.mTime.toString().compareTo(b.mTime.toString());
     });
@@ -341,7 +381,7 @@ class BackupUtil {
         var recordFile = await BackupUtil.createTempBackUpFile(recordFileName);
         File rbrFile = await recordFile.rename("$dirPath/$recordFileName");
         AppLog.info("✓ 还原前备份已创建: ${rbrFile.path}");
-        
+
         // 清理超出限制的旧RBR文件
         var stream = Directory(dirPath).list();
         List<File> files = [];
@@ -385,6 +425,9 @@ class BackupUtil {
         restoreOk = true;
       } catch (e) {
         AppLog.error("解压并还原失败: $e");
+        if (e.toString().contains('End of Central Directory')) {
+          return Result.failure(404, '备份文件可能已损坏或不是标准ZIP文件');
+        }
       }
     }
 
@@ -408,7 +451,8 @@ class BackupUtil {
     }
   }
 
-  static Future<Result> restoreFromWebDav(dav_client.File file, {bool overwriteImages = false}) async {
+  static Future<Result> restoreFromWebDav(dav_client.File file,
+      {bool overwriteImages = false}) async {
     String localRootDirPath = await SqliteUtil.getLocalRootDirPath();
 
     if (file.path == null) {
@@ -416,76 +460,103 @@ class BackupUtil {
     }
     AppLog.info("开始从WebDav还原: ${file.path}");
     String localBackupFilePath = "$localRootDirPath/${file.name}";
-    
+
     try {
-      await WebDavUtil.client.read2File(file.path as String, localBackupFilePath);
+      await WebDavUtil.client
+          .read2File(file.path as String, localBackupFilePath);
       AppLog.info("✓ 备份文件已下载到本地: $localBackupFilePath");
 
-      AppLog.info("localRootDirPath: $localRootDirPath\nlocalZipPath: $localBackupFilePath");
+      AppLog.info(
+          "localRootDirPath: $localRootDirPath\nlocalZipPath: $localBackupFilePath");
       // 下载到本地后，使用本地还原，还原结束后删除下载的文件
-      return restoreFromLocal(localBackupFilePath, delete: true, overwriteImages: overwriteImages);
+      return restoreFromLocal(localBackupFilePath,
+          delete: true, overwriteImages: overwriteImages);
     } catch (e) {
       AppLog.error("从WebDav还原失败: $e");
       return Result.failure(500, "从WebDav下载备份文件失败: $e");
     }
   }
 
-  static Future<void> unzip(String localZipPath, {bool overwriteImages = false}) async {
+  static Future<void> unzip(String localZipPath,
+      {bool overwriteImages = false}) async {
     String localRootDirPath = await SqliteUtil.getLocalRootDirPath();
-    
+
     // 初始化图片目录（确保目录存在）
     await ImageUtil.initializePrivateDirs();
     String noteImageDir = ImageUtil.getNoteImageRootDirPath();
+    String journalImageDir = ImageUtil.getJournalImageRootDirPath();
     String coverImageDir = ImageUtil.getCoverImageRootDirPath();
 
     // Read the Zip file from disk.
     final bytes = File(localZipPath).readAsBytesSync();
-    
+
     // Decode the Zip file
-    final archive = ZipDecoder().decodeBytes(bytes);
+    final archive = _decodeZipArchiveRobustly(bytes);
 
     AppLog.info("开始解压，覆盖图片: $overwriteImages");
     AppLog.info("笔记图片目录: $noteImageDir");
+    AppLog.info("日记图片目录: $journalImageDir");
     AppLog.info("封面图片目录: $coverImageDir");
-    
+
     int fileCount = 0;
     int skippedCount = 0;
-    
+
     // Extract the contents of the Zip archive to disk.
     for (final file in archive) {
       final filename = file.name;
       if (file.isFile) {
         String actualFilePath;
-        
+        final String normalizedName = filename.replaceAll('\\', '/');
+
+        String? extractLegacyImagePath(String prefix, String baseDir) {
+          final int idx = normalizedName.indexOf(prefix);
+          if (idx < 0) return null;
+          final String relativePath = normalizedName.substring(idx + prefix.length);
+          return baseDir + relativePath;
+        }
+
         // 根据文件类型确定实际保存路径
-        if (filename.startsWith("images/note_images/")) {
-          // 提取相对路径（去掉 "images/note_images/" 前缀）
-          String relativePath = filename.replaceFirst("images/note_images/", "");
-          actualFilePath = noteImageDir + relativePath;
-        } else if (filename.startsWith("images/cover_images/")) {
-          // 提取相对路径（去掉 "images/cover_images/" 前缀）
-          String relativePath = filename.replaceFirst("images/cover_images/", "");
-          actualFilePath = coverImageDir + relativePath;
+        final notePath = extractLegacyImagePath('images/note_images/', noteImageDir) ??
+            extractLegacyImagePath('note_images/', noteImageDir);
+        final journalPath = extractLegacyImagePath('images/journal_images/', journalImageDir) ??
+            extractLegacyImagePath('journal_images/', journalImageDir);
+        final coverPath = extractLegacyImagePath('images/cover_images/', coverImageDir) ??
+            extractLegacyImagePath('cover_images/', coverImageDir);
+
+        if (notePath != null) {
+          actualFilePath = notePath;
+        } else if (journalPath != null) {
+          actualFilePath = journalPath;
+        } else if (coverPath != null) {
+          actualFilePath = coverPath;
+        } else if (normalizedName.endsWith('.db')) {
+          // 兼容旧版备份中数据库文件名不是固定 mydb.db 的情况
+          actualFilePath = SqliteUtil.dbPath;
         } else {
           // 其他文件（如数据库、描述）放在根目录
           actualFilePath = "$localRootDirPath/$filename";
         }
-        
+
         // 检查是否已存在，如果是图片且已存在，根据overwriteImages决定
-        bool isImageFile = filename.startsWith("images/");
-        if (isImageFile && File(actualFilePath).existsSync() && !overwriteImages) {
+        bool isImageFile = normalizedName.startsWith("images/") ||
+          normalizedName.startsWith("note_images/") ||
+          normalizedName.startsWith("journal_images/") ||
+          normalizedName.startsWith("cover_images/");
+        if (isImageFile &&
+            File(actualFilePath).existsSync() &&
+            !overwriteImages) {
           AppLog.info("⊘ 跳过已存在的图片: $actualFilePath");
           skippedCount++;
           continue;
         }
-        
+
         try {
           // 创建父目录（包括所有中间目录）
           Directory parentDir = File(actualFilePath).parent;
           if (!parentDir.existsSync()) {
             await parentDir.create(recursive: true);
           }
-          
+
           // 写入文件
           AppLog.info("✓ 解压文件: $actualFilePath");
           final data = file.content as List<int>;
@@ -497,16 +568,32 @@ class BackupUtil {
       } else {
         // 处理目录
         Directory dirPath;
-        if (filename.startsWith("images/note_images/")) {
-          String relativePath = filename.replaceFirst("images/note_images/", "");
-          dirPath = Directory(noteImageDir + relativePath);
-        } else if (filename.startsWith("images/cover_images/")) {
-          String relativePath = filename.replaceFirst("images/cover_images/", "");
-          dirPath = Directory(coverImageDir + relativePath);
+        final String normalizedName = filename.replaceAll('\\', '/');
+
+        String? extractLegacyDirPath(String prefix, String baseDir) {
+          final int idx = normalizedName.indexOf(prefix);
+          if (idx < 0) return null;
+          final String relativePath = normalizedName.substring(idx + prefix.length);
+          return baseDir + relativePath;
+        }
+
+        final noteDirPath = extractLegacyDirPath('images/note_images/', noteImageDir) ??
+            extractLegacyDirPath('note_images/', noteImageDir);
+        final journalDirPath = extractLegacyDirPath('images/journal_images/', journalImageDir) ??
+            extractLegacyDirPath('journal_images/', journalImageDir);
+        final coverDirPath = extractLegacyDirPath('images/cover_images/', coverImageDir) ??
+            extractLegacyDirPath('cover_images/', coverImageDir);
+
+        if (noteDirPath != null) {
+          dirPath = Directory(noteDirPath);
+        } else if (journalDirPath != null) {
+          dirPath = Directory(journalDirPath);
+        } else if (coverDirPath != null) {
+          dirPath = Directory(coverDirPath);
         } else {
           dirPath = Directory("$localRootDirPath/$filename");
         }
-        
+
         if (!dirPath.existsSync()) {
           try {
             await dirPath.create(recursive: true);
@@ -517,23 +604,88 @@ class BackupUtil {
         }
       }
     }
-    
+
     AppLog.info("✓ 解压完成 (已解压: $fileCount 个文件, 跳过: $skippedCount 个)");
+  }
+
+  static Archive _decodeZipArchiveRobustly(List<int> bytes) {
+    try {
+      return ZipDecoder().decodeBytes(bytes);
+    } catch (e) {
+      AppLog.warn('标准ZIP解码失败，尝试提取有效ZIP段: $e');
+    }
+
+    final extracted = _extractZipPayload(bytes);
+    if (extracted != null) {
+      try {
+        return ZipDecoder().decodeBytes(extracted);
+      } catch (e) {
+        AppLog.warn('提取ZIP段后仍解码失败: $e');
+      }
+    }
+
+    throw const FormatException(
+        'Could not find End of Central Directory Record');
+  }
+
+  static Uint8List? _extractZipPayload(List<int> bytes) {
+    if (bytes.length < 4) return null;
+
+    final int start = _findSignature(bytes, const [0x50, 0x4B, 0x03, 0x04]);
+    if (start < 0) return null;
+
+    final int eocd = _findLastSignature(bytes, const [0x50, 0x4B, 0x05, 0x06]);
+    if (eocd < 0 || eocd + 22 > bytes.length) return null;
+
+    final int commentLen = bytes[eocd + 20] | (bytes[eocd + 21] << 8);
+    final int endExclusive = eocd + 22 + commentLen;
+    if (endExclusive > bytes.length || endExclusive <= start) return null;
+
+    return Uint8List.fromList(bytes.sublist(start, endExclusive));
+  }
+
+  static int _findSignature(List<int> bytes, List<int> sig) {
+    for (int i = 0; i <= bytes.length - sig.length; i++) {
+      bool ok = true;
+      for (int j = 0; j < sig.length; j++) {
+        if (bytes[i + j] != sig[j]) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) return i;
+    }
+    return -1;
+  }
+
+  static int _findLastSignature(List<int> bytes, List<int> sig) {
+    for (int i = bytes.length - sig.length; i >= 0; i--) {
+      bool ok = true;
+      for (int j = 0; j < sig.length; j++) {
+        if (bytes[i + j] != sig[j]) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) return i;
+    }
+    return -1;
   }
 
   /// 获取远程所有备份文件列表，包括手动和自动
   static Future<List<dav_client.File>> getAllBackupFiles() async {
     List<dav_client.File> files = [];
 
-    String backupDir = await WebDavUtil.getRemoteDirPath();
-    if (backupDir.isEmpty) {
+    final List<String> backupDirs = await WebDavUtil.getRemoteBackupDirPathsForRead();
+    if (backupDirs.isEmpty) {
       AppLog.info("远程备份路径为空");
       return [];
     }
 
-    String autoDir = await WebDavUtil.getRemoteAutoDirPath(backupDir);
-    files.addAll(await WebDavUtil.client.readDir(backupDir));
-    files.addAll(await WebDavUtil.client.readDir(autoDir));
+    for (final backupDir in backupDirs) {
+      files.addAll(await _safeReadRemoteDir(backupDir));
+      files.addAll(await _safeReadRemoteDir("$backupDir/automatic"));
+    }
 
     // 去除目录
     files.removeWhere(
@@ -542,6 +694,15 @@ class BackupUtil {
     AppLog.info("获取完毕，共${files.length}个文件");
     files.sort((a, b) => b.mTime.toString().compareTo(a.mTime.toString()));
     return files;
+  }
+
+  static Future<List<dav_client.File>> _safeReadRemoteDir(
+      String dirPath) async {
+    try {
+      return await WebDavUtil.client.readDir(dirPath);
+    } catch (_) {
+      return [];
+    }
   }
 
   /// 获取最新远程备份文件

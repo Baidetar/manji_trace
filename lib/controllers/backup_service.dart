@@ -75,7 +75,7 @@ class BackupService extends GetxService {
     if (curRemoteBackupModeName == BackupMode.backupAfterOpenApp.name) {
       AppLog.info("准备dav自动备份");
       BackupUtil.backup(
-        remoteBackupDirPath: await WebDavUtil.getRemoteDirPath(),
+        remoteBackupDirPath: await WebDavUtil.getRemoteBackupDirPath(),
         showToastFlag: false,
         automatic: true,
       );
@@ -149,7 +149,7 @@ class BackupService extends GetxService {
       (timer) async {
         AppLog.info("自动备份(间隔${mode.intervalSeconds}s)");
         // BackupUtil.backup(
-        //   remoteBackupDirPath: await WebDavUtil.getRemoteDirPath(),
+        //   remoteBackupDirPath: await WebDavUtil.getRemoteBackupDirPath(),
         //   showToastFlag: false,
         //   automatic: true,
         // );

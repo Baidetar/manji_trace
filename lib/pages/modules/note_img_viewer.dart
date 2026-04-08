@@ -23,11 +23,13 @@ import 'package:manji_trace/utils/log.dart';
 class ImageViewerPage extends StatefulWidget {
   final List<RelativeLocalImage> relativeLocalImages;
   final int initialIndex;
+  final bool isJournalImage;
 
   const ImageViewerPage({
     Key? key,
     required this.relativeLocalImages,
     this.initialIndex = 0,
+    this.isJournalImage = false,
   }) : super(key: key);
 
   @override
@@ -66,8 +68,9 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
   _getImageLocalPaths() {
     imageLocalPaths.clear();
     for (var relativeLocalImage in widget.relativeLocalImages) {
-      imageLocalPaths
-          .add(ImageUtil.getAbsoluteNoteImagePath(relativeLocalImage.path));
+      imageLocalPaths.add(widget.isJournalImage
+          ? ImageUtil.getAbsoluteJournalImagePath(relativeLocalImage.path)
+          : ImageUtil.getAbsoluteNoteImagePath(relativeLocalImage.path));
     }
     imagesCount = imageLocalPaths.length;
     // 首次进入可能选的是后面的图片，也需要移动
@@ -291,7 +294,10 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
   }
 
   _showDialogAboutImageAttributes() {
-    File file = File(ImageUtil.getAbsoluteNoteImagePath(
+    File file = File(widget.isJournalImage
+      ? ImageUtil.getAbsoluteJournalImagePath(
+        widget.relativeLocalImages[currentIndex].path)
+      : ImageUtil.getAbsoluteNoteImagePath(
         widget.relativeLocalImages[currentIndex].path));
 
     return showCommonModalBottomSheet(
@@ -364,8 +370,11 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
                     child: SizedBox(
                       height: 100,
                       width: 140,
-                      child: CommonImage(ImageUtil.getAbsoluteNoteImagePath(
-                          widget.relativeLocalImages[index].path)),
+                      child: CommonImage(widget.isJournalImage
+                          ? ImageUtil.getAbsoluteJournalImagePath(
+                              widget.relativeLocalImages[index].path)
+                          : ImageUtil.getAbsoluteNoteImagePath(
+                              widget.relativeLocalImages[index].path)),
                     ),
                   ),
                 ),

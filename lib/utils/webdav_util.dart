@@ -8,6 +8,11 @@ import 'package:webdav_client/webdav_client.dart';
 import 'package:manji_trace/utils/log.dart';
 
 class WebDavUtil {
+  static const String preferredRemoteDir = "/漫记";
+  static const String backupSubDirName = "backup";
+  static const String syncSubDirName = "sync";
+  static const List<String> legacyRemoteDirs = ["/manji_trace", "/animetrace"];
+
   static WebDavUtil? _webDavUtil;
 
   WebDavUtil._();
@@ -44,7 +49,7 @@ class WebDavUtil {
 
     // Set transfer data time in milliseconds.
     client.setReceiveTimeout(timeout);
-    
+
     AppLog.info("WebDav初始化成功！超时时间：${timeout}ms");
     return true;
   }
@@ -87,15 +92,101 @@ class WebDavUtil {
     }
   }
 
-  static Future<String> getRemoteDirPath() async {
+  static Future<String> getRemoteBackupDirPath() async {
     if (RemoteController.to.isOffline) {
       ToastUtil.showText("请先连接帐号，再进行备份");
       return "";
     }
-    String backupDir = "/animetrace";
-    // readDir('/')遍历判断是否存在animetrace目录，不如直接创建，如果存在则会跳过
+    await client.mkdir(preferredRemoteDir);
+    const String backupDir = "$preferredRemoteDir/$backupSubDirName";
     await client.mkdir(backupDir);
     return backupDir;
+  }
+
+  static Future<String> getRemoteSyncDirPath() async {
+    if (RemoteController.to.isOffline) {
+      ToastUtil.showText("请先连接帐号，再进行同步");
+      return "";
+    }
+    await client.mkdir(preferredRemoteDir);
+    const String syncDir = "$preferredRemoteDir/$syncSubDirName";
+    await client.mkdir(syncDir);
+    return syncDir;
+  }
+
+  // 兼容旧调用：默认返回备份目录。
+  static Future<String> getRemoteDirPath() async {
+    return getRemoteBackupDirPath();
+  }
+
+  /// 获取用于读取备份/同步数据的目录列表（包含兼容旧目录）
+  static Future<List<String>> getRemoteDirPathsForRead() async {
+    if (RemoteController.to.isOffline) {
+      return [];
+    }
+
+    final List<String> candidates = [preferredRemoteDir, ...legacyRemoteDirs];
+    final List<String> existing = [];
+    for (final dir in candidates) {
+      if (await _remoteDirExists(dir)) {
+        existing.add(dir);
+      }
+    }
+
+    if (existing.isEmpty) {
+      // 首次使用时创建新目录
+      await client.mkdir(preferredRemoteDir);
+      return [preferredRemoteDir];
+    }
+
+    // 读取时优先新目录
+    if (!existing.contains(preferredRemoteDir)) {
+      existing.insert(0, preferredRemoteDir);
+    }
+    return existing;
+  }
+
+  static Future<List<String>> getRemoteBackupDirPathsForRead() async {
+    final List<String> bases = await getRemoteDirPathsForRead();
+    final List<String> dirs = [];
+    final Set<String> dedup = {};
+    for (final base in bases) {
+      final String backupDir = "$base/$backupSubDirName";
+      if (await _remoteDirExists(backupDir) && dedup.add(backupDir)) {
+        dirs.add(backupDir);
+      }
+      // 兼容旧版直接写在根目录
+      if (dedup.add(base)) {
+        dirs.add(base);
+      }
+    }
+    return dirs;
+  }
+
+  static Future<List<String>> getRemoteSyncDirPathsForRead() async {
+    final List<String> bases = await getRemoteDirPathsForRead();
+    final List<String> dirs = [];
+    final Set<String> dedup = {};
+    for (final base in bases) {
+      final String syncDir = "$base/$syncSubDirName";
+      if (await _remoteDirExists(syncDir) && dedup.add(syncDir)) {
+        dirs.add(syncDir);
+      }
+      // 兼容旧版直接写在根目录
+      if (dedup.add(base)) {
+        dirs.add(base);
+      }
+    }
+    return dirs;
+  }
+
+  static Future<bool> _remoteDirExists(String remoteDir) async {
+    try {
+      await client.readDir(remoteDir);
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<String> getRemoteAutoDirPath(String backupDir) async {

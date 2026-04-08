@@ -328,6 +328,7 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
       children: [
         NoteImgItem(
           relativeLocalImages: widget.note!.relativeLocalImages,
+          isJournalImage: true,
           initialIndex: imageIndex,
         ),
         if (showDelButton)
@@ -377,11 +378,11 @@ class _JournalNoteEditorState extends State<JournalNoteEditor> {
     try {
       final File sourceFile = File(absolutePath);
       if (!await sourceFile.exists()) return null;
-      final targetDirPath = ImageUtil.getNoteImageRootDirPath();
+      final targetDirPath = ImageUtil.getJournalImageRootDirPath();
       final fileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(absolutePath)}';
       final targetPath = p.join(targetDirPath, fileName);
       await sourceFile.copy(targetPath);
-      return ImageUtil.getRelativeNoteImagePath(targetPath);
+      return ImageUtil.getRelativeJournalImagePath(targetPath);
     } catch (e) {
       AppLog.error("复制图片失败：$e");
       return null;

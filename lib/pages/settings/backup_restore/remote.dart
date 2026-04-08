@@ -34,8 +34,7 @@ class RemoteBackupPage extends StatefulWidget {
 class _RemoteBackupPageState extends State<RemoteBackupPage> {
   int autoBackupWebDavNumber =
       SPUtil.getInt("autoBackupWebDavNumber", defaultValue: 20);
-  int webdavTimeout =
-      SPUtil.getInt("webdav_timeout", defaultValue: 30000);
+  int webdavTimeout = SPUtil.getInt("webdav_timeout", defaultValue: 30000);
   bool canManualBackup = true;
 
   BackupService get backupService => BackupService.to;
@@ -92,7 +91,7 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
               ),
               ListTile(
                 title: const Text("立即备份"),
-                subtitle: const Text("点击进行备份，备份目录为 /animetrace"),
+                subtitle: const Text("点击进行备份，备份目录为 /漫记/backup"),
                 onTap: () async {
                   if (RemoteController.to.isOffline) {
                     ToastUtil.showText("请先配置帐号，再进行备份");
@@ -110,7 +109,7 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
 
                   ToastUtil.showText("正在备份");
                   String remoteBackupDirPath =
-                      await WebDavUtil.getRemoteDirPath();
+                      await WebDavUtil.getRemoteBackupDirPath();
                   if (remoteBackupDirPath.isNotEmpty) {
                     BackupUtil.backup(remoteBackupDirPath: remoteBackupDirPath);
                   }
@@ -325,7 +324,8 @@ class _RemoteBackupPageState extends State<RemoteBackupPage> {
           for (int i = 0; i < BackupMode.values.length; ++i)
             BackupMode.values[i] == BackupMode.close
                 ? const SizedBox()
-                : RadioListTile( // ignore: deprecated_member_use
+                : RadioListTile(
+                    // ignore: deprecated_member_use
                     title: Text(BackupMode.values[i].title),
                     value: BackupMode.values[i].name,
                     groupValue: backupService.curRemoteBackupModeName,

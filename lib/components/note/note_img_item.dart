@@ -16,6 +16,7 @@ class NoteImgItem extends StatelessWidget {
   final int imageRemainCount; // 笔记列表页：第9张图显示剩余图片数量
   final bool useCustomAspectRatio;
   final double aspectRatio;
+  final bool isJournalImage;
   final void Function()? onLongPress;
   const NoteImgItem(
       {required this.relativeLocalImages,
@@ -23,6 +24,7 @@ class NoteImgItem extends StatelessWidget {
       this.imageRemainCount = 0,
       this.aspectRatio = 4 / 3,
       this.useCustomAspectRatio = false,
+      this.isJournalImage = false,
       this.onLongPress,
       Key? key})
       : super(key: key);
@@ -39,6 +41,7 @@ class NoteImgItem extends StatelessWidget {
           context,
           ImageViewerPage(
               relativeLocalImages: relativeLocalImages,
+              isJournalImage: isJournalImage,
               initialIndex: initialIndex),
         );
       },
@@ -71,7 +74,9 @@ class NoteImgItem extends StatelessWidget {
       borderRadius: useCustomAspectRatio
           ? BorderRadius.zero
           : BorderRadius.circular(AppTheme.noteImgRadius),
-      child: CommonImage(ImageUtil.getAbsoluteNoteImagePath(relativeImagePath)),
+      child: CommonImage(isJournalImage
+          ? ImageUtil.getAbsoluteJournalImagePath(relativeImagePath)
+          : ImageUtil.getAbsoluteNoteImagePath(relativeImagePath)),
     );
   }
 }

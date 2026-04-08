@@ -54,13 +54,30 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
           : DateTime.fromMillisecondsSinceEpoch(syncService.lastLocalSyncTime)
               .toString()
               .substring(0, 19);
+      String conflictRemoteTimeStr = syncService.pendingRemoteConflict == null
+          ? "-"
+          : DateTime.fromMillisecondsSinceEpoch(
+                  syncService.pendingRemoteConflict!.lastUpdateTime)
+              .toString()
+              .substring(0, 19);
+      String conflictLocalTimeStr = syncService.pendingLocalDbModifiedTime == 0
+          ? "-"
+          : DateTime.fromMillisecondsSinceEpoch(
+                  syncService.pendingLocalDbModifiedTime)
+              .toString()
+              .substring(0, 19);
+        String deltaFallbackTimeStr = syncService.lastDeltaFallbackTime == 0
+          ? "-"
+          : DateTime.fromMillisecondsSinceEpoch(syncService.lastDeltaFallbackTime)
+            .toString()
+            .substring(0, 19);
 
       return SettingCard(
         title: '多设备同步 (WebDAV)',
         children: [
           SwitchListTile(
             title: const Text("启动时自动同步"),
-            subtitle: const Text("开启后，每次启动应用都会自动检测云端最新数据并覆盖本地"),
+            subtitle: const Text("同步目录统一为 /漫记/sync；若检测到双端改动冲突，不会自动覆盖"),
             value: syncService.enableAutoSync,
             onChanged: (val) {
               setState(() {
@@ -68,6 +85,46 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
               });
             },
           ),
+          if (syncService.hasConflict)
+            ListTile(
+              title: const Text("检测到同步冲突"),
+              subtitle: Text(
+                "云端设备: ${syncService.pendingRemoteConflict?.deviceName ?? '-'}\n"
+                "云端更新时间: $conflictRemoteTimeStr\n"
+                "本地更新时间: $conflictLocalTimeStr",
+              ),
+            ),
+          if (syncService.hasConflict)
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: syncService.isSyncing
+                          ? null
+                          : () async {
+                              await syncService.forceUploadLocalVersion();
+                              setState(() {});
+                            },
+                      child: const Text("保留本地并上传"),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: syncService.isSyncing
+                          ? null
+                          : () async {
+                              await syncService.forceDownloadRemoteVersion();
+                              setState(() {});
+                            },
+                      child: const Text("采用云端并下载"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ListTile(
             title: const Text("立即同步"),
             subtitle: Text("上次同步: $syncTimeStr"),
@@ -85,9 +142,58 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
                     setState(() {});
                   },
           ),
+          if (syncService.lastDeltaFallbackReason.isNotEmpty)
+            ListTile(
+              title: const Text("最近一次增量回退"),
+              subtitle: Text(
+                "时间: $deltaFallbackTimeStr\n"
+                "原因: ${_formatDeltaFallbackReason(syncService.lastDeltaFallbackReason)}",
+              ),
+            ),
+          ListTile(
+            title: const Text("重建云端增量链"),
+            subtitle: Text(syncService.needDeltaChainRebase
+                ? "状态: 待重建（下次上传会自动清理并重建）"
+                : "用于修复增量链断裂/不连续，执行时会强制上传当前本地版本"),
+            trailing: const Icon(Icons.build_circle_outlined),
+            onTap: syncService.isSyncing
+                ? null
+                : () async {
+                    await syncService.rebuildRemoteDeltaChain();
+                    setState(() {});
+                  },
+          ),
         ],
       );
     });
+  }
+
+  String _formatDeltaFallbackReason(String reason) {
+    if (reason.contains('delta-digest-mismatch')) {
+      return '增量应用后摘要不一致';
+    }
+    if (reason.contains('delta-apply-failed')) {
+      return '增量清单回放失败';
+    }
+    if (reason.contains('delta-parse-failed')) {
+      return '增量清单解析失败';
+    }
+    if (reason.contains('delta-chain-gap-at-')) {
+      return '增量链不连续（缺少中间分片）';
+    }
+    if (reason.contains('delta-cursor-too-old')) {
+      return '本地增量游标过旧（超出远端保留窗口）';
+    }
+    if (reason.contains('fallback-empty')) {
+      return '单清单不可用（为空）';
+    }
+    if (reason.contains('fallback-json-invalid')) {
+      return '单清单不可用（格式错误）';
+    }
+    if (reason.contains('fallback-range-mismatch')) {
+      return '单清单范围与本地游标不匹配';
+    }
+    return reason;
   }
 
   ListTile _buildMigrateOldImagesTile() {
@@ -108,8 +214,11 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
               TextButton(
                   onPressed: () async {
                     Navigator.pop(context);
-                    int count = await SqliteUtil.migrateOldImageData();
-                    ToastUtil.showText("修复完成，共处理 $count 条记录");
+                    int dataCount = await SqliteUtil.migrateOldImageData();
+                    int fileCount =
+                        await SqliteUtil.migrateJournalImageFilesToNewRoot();
+                    ToastUtil.showText(
+                        "修复完成，共处理 ${dataCount + fileCount} 项旧数据/图片");
                   },
                   child: const Text("确定")),
             ],

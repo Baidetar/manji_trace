@@ -45,10 +45,13 @@ class ImageDao {
 
     List<String> images = [];
     List<Map> rows =
-        await database.rawQuery('select image_local_path from image');
+        await database.rawQuery('select image_local_path, note_type from image');
     for (var row in rows) {
       String relativePath = row['image_local_path'];
-      String path = ImageUtil.getAbsoluteNoteImagePath(relativePath);
+      final int noteType = row['note_type'] as int? ?? NoteType.episode.value;
+      String path = noteType == NoteType.journal.value
+          ? ImageUtil.getAbsoluteJournalImagePath(relativePath)
+          : ImageUtil.getAbsoluteNoteImagePath(relativePath);
       images.add(path);
     }
 

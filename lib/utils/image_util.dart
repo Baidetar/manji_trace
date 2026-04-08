@@ -11,10 +11,12 @@ class ImageUtil {
   ImageUtil._();
 
   static late String noteImageRootDirPath;
+  static late String journalImageRootDirPath;
   static late String coverImageRootDirPath;
 
   // 私有目录子文件夹名称
   static const String _noteImageFolder = "note_images";
+  static const String _journalImageFolder = "journal_images";
   static const String _coverImageFolder = "cover_images";
 
   /// 初始化私有目录，应该在应用启动时调用一次
@@ -24,15 +26,19 @@ class ImageUtil {
       
       noteImageRootDirPath = 
           p.join(documentDir.path, _noteImageFolder) + p.separator;
+        journalImageRootDirPath = 
+          p.join(documentDir.path, _journalImageFolder) + p.separator;
       coverImageRootDirPath = 
           p.join(documentDir.path, _coverImageFolder) + p.separator;
       
       // 创建目录如果不存在
       await Directory(noteImageRootDirPath).create(recursive: true);
+        await Directory(journalImageRootDirPath).create(recursive: true);
       await Directory(coverImageRootDirPath).create(recursive: true);
       
       AppLog.info("图片私有目录初始化完成");
       AppLog.info("笔记图片目录: $noteImageRootDirPath");
+        AppLog.info("日记图片目录: $journalImageRootDirPath");
       AppLog.info("封面图片目录: $coverImageRootDirPath");
     } catch (e) {
       AppLog.error("初始化图片私有目录失败: $e");
@@ -53,6 +59,10 @@ class ImageUtil {
     return noteImageRootDirPath;
   }
 
+  static String getJournalImageRootDirPath() {
+    return journalImageRootDirPath;
+  }
+
   /// 获取封面图片根目录路径
   static String getCoverImageRootDirPath() {
     return coverImageRootDirPath;
@@ -60,6 +70,10 @@ class ImageUtil {
 
   static bool hasNoteImageRootDirPath() {
     return noteImageRootDirPath.isNotEmpty;
+  }
+
+  static bool hasJournalImageRootDirPath() {
+    return journalImageRootDirPath.isNotEmpty;
   }
 
   static bool hasCoverImageRootDirPath() {
@@ -82,6 +96,12 @@ class ImageUtil {
     return relativeImagePath;
   }
 
+  static String getRelativeJournalImagePath(String absoluteImagePath) {
+    String relativeImagePath =
+        _removeRootDirPath(absoluteImagePath, journalImageRootDirPath);
+    return relativeImagePath;
+  }
+
   static String _removeRootDirPath(String path, String rootDirPath) {
     // 移除根目录路径，保留相对路径
     // 在Android上，文件已经在私有目录中，所以能获取完整相对路径
@@ -96,6 +116,19 @@ class ImageUtil {
   static String getAbsoluteNoteImagePath(String relativeImagePath) {
     String absolutePath = noteImageRootDirPath + relativeImagePath;
     absolutePath = _fixPathSeparator(absolutePath);
+    return absolutePath;
+  }
+
+  static String getAbsoluteJournalImagePath(String relativeImagePath) {
+    String absolutePath = journalImageRootDirPath + relativeImagePath;
+    absolutePath = _fixPathSeparator(absolutePath);
+    if (!File(absolutePath).existsSync()) {
+      final String legacyPath = noteImageRootDirPath + relativeImagePath;
+      final String fixedLegacyPath = _fixPathSeparator(legacyPath);
+      if (File(fixedLegacyPath).existsSync()) {
+        return fixedLegacyPath;
+      }
+    }
     return absolutePath;
   }
 

@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'dart:async';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/platform.dart';
+import 'package:manji_trace/utils/sync_change_log_util.dart';
 import 'package:manji_trace/utils/episode.dart';
 import 'package:manji_trace/utils/escape_util.dart';
 import 'package:manji_trace/dao/anime_dao.dart';
@@ -78,6 +78,10 @@ class SqliteUtil {
     // 为图片表增加笔记类型列，支持独立笔记
     await SqliteUtil.addColumnNoteTypeToImage();
 
+    // 自动修复旧版日记图片与数据库映射
+    await SqliteUtil.migrateOldImageData();
+    await SqliteUtil.migrateJournalImageFilesToNewRoot();
+
     // 创建标签表、动漫标签表、集描述表
     await LabelDao.createTable();
     await LabelDao.addColumnOrder();
@@ -86,7 +90,10 @@ class SqliteUtil {
     // 创建系列表、动漫系列表
     await SeriesDao.createTable();
     await AnimeSeriesDao.createTable();
-    
+
+    // 创建增量同步变更日志基础设施（表+触发器）
+    await SyncChangeLogUtil.ensureChangeLogInfra();
+
     return true;
   }
 
@@ -107,7 +114,7 @@ class SqliteUtil {
   static Future<Database> _initDatabase() async {
     dbPath = await getDBPath();
     AppLog.info("💾 db path: $dbPath");
-    
+
     if (PlatformUtil.isMobile) {
       return await openDatabase(
         dbPath,
@@ -195,7 +202,7 @@ class SqliteUtil {
     columns['official_site'] = 'TEXT';
     columns['anime_url'] = 'TEXT';
     columns['review_number'] = 'INTEGER';
-    
+
     for (var entry in columns.entries) {
       var list = await database.rawQuery('''
         select * from sqlite_master where name = 'anime' and sql like '%${entry.key}%';
@@ -222,15 +229,19 @@ class SqliteUtil {
     select * from sqlite_master where name = 'history' and sql like '%review_number%';
     ''');
     if (list.isEmpty) {
-      await database.execute('alter table history add column review_number INTEGER;');
-      await database.rawUpdate('update history set review_number = 1 where review_number is NULL;');
+      await database
+          .execute('alter table history add column review_number INTEGER;');
+      await database.rawUpdate(
+          'update history set review_number = 1 where review_number is NULL;');
     }
     list = await database.rawQuery('''
     select * from sqlite_master where name = 'episode_note' and sql like '%review_number%';
     ''');
     if (list.isEmpty) {
-      await database.execute('alter table episode_note add column review_number INTEGER;');
-      await database.rawUpdate('update episode_note set review_number = 1 where review_number is NULL;');
+      await database.execute(
+          'alter table episode_note add column review_number INTEGER;');
+      await database.rawUpdate(
+          'update episode_note set review_number = 1 where review_number is NULL;');
     }
   }
 
@@ -291,8 +302,14 @@ class SqliteUtil {
   }
 
   static Future<void> addColumnTwoTimeToEpisodeNote() async {
-    await addColumnName(tableName: 'episode_note', columnName: 'create_time', columnType: 'TEXT');
-    await addColumnName(tableName: 'episode_note', columnName: 'update_time', columnType: 'TEXT');
+    await addColumnName(
+        tableName: 'episode_note',
+        columnName: 'create_time',
+        columnType: 'TEXT');
+    await addColumnName(
+        tableName: 'episode_note',
+        columnName: 'update_time',
+        columnType: 'TEXT');
   }
 
   static Future<void> createTableEpisodeNote() async {
@@ -321,8 +338,10 @@ class SqliteUtil {
   }
 
   static Future<int> insertNoteIdAndImageLocalPath(
-      int noteId, String imageLocalPath, int orderIdx, {NoteType noteType = NoteType.episode}) async {
-    AppLog.info("sql: insertNoteIdAndLocalImg(noteId=$noteId, imageLocalPath=$imageLocalPath, orderIdx=$orderIdx, noteType=${noteType.value})");
+      int noteId, String imageLocalPath, int orderIdx,
+      {NoteType noteType = NoteType.episode}) async {
+    AppLog.info(
+        "sql: insertNoteIdAndLocalImg(noteId=$noteId, imageLocalPath=$imageLocalPath, orderIdx=$orderIdx, noteType=${noteType.value})");
     return await database.rawInsert('''
     insert into image (note_id, image_local_path, order_idx, note_type)
     values ($noteId, '$imageLocalPath', $orderIdx, ${noteType.value});
@@ -361,7 +380,8 @@ class SqliteUtil {
   }
 
   static Future<void> addColumnOrderIdxToImage() async {
-    await addColumnName(tableName: 'image', columnName: 'order_idx', columnType: 'INTEGER');
+    await addColumnName(
+        tableName: 'image', columnName: 'order_idx', columnType: 'INTEGER');
   }
 
   static Future<int> migrateOldImageData() async {
@@ -408,6 +428,55 @@ class SqliteUtil {
     return movedCount + duplicatedCount;
   }
 
+  static Future<int> migrateJournalImageFilesToNewRoot() async {
+    AppLog.info("sql: migrateJournalImageFilesToNewRoot");
+    final rows = await database.rawQuery('''
+      SELECT image_local_path
+      FROM image
+      WHERE note_type = ${NoteType.journal.value}
+    ''');
+
+    int movedCount = 0;
+    for (final row in rows) {
+      final String relativePath = row['image_local_path'] as String? ?? '';
+      if (relativePath.isEmpty) {
+        continue;
+      }
+
+      final String legacyPath = ImageUtil.getAbsoluteNoteImagePath(relativePath);
+      final String targetPath = ImageUtil.getAbsoluteJournalImagePath(relativePath);
+      final legacyFile = File(legacyPath);
+      final targetFile = File(targetPath);
+
+      try {
+        if (await targetFile.exists()) {
+          if (await legacyFile.exists()) {
+            try {
+              await legacyFile.delete();
+            } catch (_) {}
+          }
+          continue;
+        }
+
+        if (!await legacyFile.exists()) {
+          continue;
+        }
+
+        await targetFile.parent.create(recursive: true);
+        await legacyFile.copy(targetPath);
+        try {
+          await legacyFile.delete();
+        } catch (_) {}
+        movedCount++;
+      } catch (e) {
+        AppLog.warn('迁移日记图片失败($relativePath): $e');
+      }
+    }
+
+    AppLog.info('日记图片文件迁移完成: $movedCount');
+    return movedCount;
+  }
+
   static T? firstRowColumnValue<T>(List<Map<String, Object?>> rows) {
     if (rows.isEmpty || rows.first.values.isEmpty) return null;
     final value = rows.first.values.first;
@@ -415,35 +484,49 @@ class SqliteUtil {
   }
 
   static Future<Anime> getAnimeByAnimeId(int animeId) async {
-    var list = await database.rawQuery('select * from anime where anime_id = $animeId;');
-    if (list.isEmpty) return Anime(animeId: 0, animeName: "", animeEpisodeCnt: 0);
-    return await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true, queryHasJoinedSeries: true);
+    var list = await database
+        .rawQuery('select * from anime where anime_id = $animeId;');
+    if (list.isEmpty) {
+      return Anime(animeId: 0, animeName: "", animeEpisodeCnt: 0);
+    }
+    return await AnimeDao.row2Bean(list[0],
+        queryCheckedEpisodeCnt: true, queryHasJoinedSeries: true);
   }
 
-  static void insertHistoryItem(int animeId, int episodeNumber, String date, int reviewNumber) async {
-    await database.rawInsert('insert into history(date, anime_id, episode_number, review_number) values(\'$date\', $animeId, $episodeNumber, $reviewNumber);');
+  static void insertHistoryItem(
+      int animeId, int episodeNumber, String date, int reviewNumber) async {
+    await database.rawInsert(
+        'insert into history(date, anime_id, episode_number, review_number) values(\'$date\', $animeId, $episodeNumber, $reviewNumber);');
   }
 
-  static void updateHistoryItem(int animeId, int episodeNumber, String date, int reviewNumber) async {
-    await database.rawUpdate('update history set date = \'$date\' where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;');
+  static void updateHistoryItem(
+      int animeId, int episodeNumber, String date, int reviewNumber) async {
+    await database.rawUpdate(
+        'update history set date = \'$date\' where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;');
   }
 
-  static void deleteHistoryItemByAnimeIdAndEpisodeNumberAndReviewNumber(int animeId, int episodeNumber, int reviewNumber) async {
-    await database.rawDelete('delete from history where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;');
+  static void deleteHistoryItemByAnimeIdAndEpisodeNumberAndReviewNumber(
+      int animeId, int episodeNumber, int reviewNumber) async {
+    await database.rawDelete(
+        'delete from history where anime_id = $animeId and episode_number = $episodeNumber and review_number = $reviewNumber;');
   }
 
   static void insertTagName(String tagName, int tagOrder) async {
-    await database.rawInsert('insert into tag(tag_name, tag_order) values(\'$tagName\', $tagOrder);');
+    await database.rawInsert(
+        'insert into tag(tag_name, tag_order) values(\'$tagName\', $tagOrder);');
   }
 
   static void updateTagName(String oldTagName, String newTagName) async {
-    await database.rawUpdate('update tag set tag_name = \'$newTagName\' where tag_name = \'$oldTagName\';');
-    await database.rawUpdate('update anime set tag_name = \'$newTagName\' where tag_name = \'$oldTagName\';');
+    await database.rawUpdate(
+        'update tag set tag_name = \'$newTagName\' where tag_name = \'$oldTagName\';');
+    await database.rawUpdate(
+        'update anime set tag_name = \'$newTagName\' where tag_name = \'$oldTagName\';');
   }
 
   static Future<bool> updateTagOrder(List<String> tagNames) async {
     for (int i = 0; i < tagNames.length; ++i) {
-      await database.rawUpdate('update tag set tag_order = $i where tag_name = \'${tagNames[i]}\';');
+      await database.rawUpdate(
+          'update tag set tag_order = $i where tag_name = \'${tagNames[i]}\';');
     }
     return true;
   }
@@ -453,40 +536,55 @@ class SqliteUtil {
   }
 
   static Future<List<String>> getAllTags() async {
-    var list = await database.rawQuery('select tag_name from tag order by tag_order');
+    var list =
+        await database.rawQuery('select tag_name from tag order by tag_order');
     return list.map((e) => e["tag_name"] as String).toList();
   }
 
   static Future<Anime> getAnimeByAnimeUrl(Anime anime) async {
     if (anime.animeUrl.isEmpty) return anime..animeId = 0;
-    var list = await database.rawQuery('select * from anime where anime_url = \'${anime.animeUrl}\';');
+    var list = await database.rawQuery(
+        'select * from anime where anime_url = \'${anime.animeUrl}\';');
     if (list.isEmpty) return anime..animeId = 0;
     return await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true);
   }
 
-  static Future<List<Episode>> getEpisodeHistoryByAnimeIdAndRange(Anime anime, int startEpisodeNumber, int endEpisodeNumber) async {
-    var list = await database.rawQuery('select date, episode_number from history where anime_id = ${anime.animeId} and review_number = ${anime.reviewNumber} and episode_number >= $startEpisodeNumber and episode_number <= $endEpisodeNumber;');
-    List<Episode> episodes = List.generate(endEpisodeNumber - startEpisodeNumber + 1, (i) => Episode(startEpisodeNumber + i, anime.reviewNumber, startNumber: EpisodeUtil.getFakeEpisodeStartNumber(anime)));
+  static Future<List<Episode>> getEpisodeHistoryByAnimeIdAndRange(
+      Anime anime, int startEpisodeNumber, int endEpisodeNumber) async {
+    var list = await database.rawQuery(
+        'select date, episode_number from history where anime_id = ${anime.animeId} and review_number = ${anime.reviewNumber} and episode_number >= $startEpisodeNumber and episode_number <= $endEpisodeNumber;');
+    List<Episode> episodes = List.generate(
+        endEpisodeNumber - startEpisodeNumber + 1,
+        (i) => Episode(startEpisodeNumber + i, anime.reviewNumber,
+            startNumber: EpisodeUtil.getFakeEpisodeStartNumber(anime)));
     for (var row in list) {
       int idx = (row['episode_number'] as int) - startEpisodeNumber;
-      if (idx >= 0 && idx < episodes.length) episodes[idx].dateTime = row['date'] as String;
+      if (idx >= 0 && idx < episodes.length) {
+        episodes[idx].dateTime = row['date'] as String;
+      }
     }
     return episodes;
   }
 
   static Future<int> getAnimesCntBytagName(String tagName) async {
-    var list = await database.rawQuery('select count(anime_id) cnt from anime where tag_name = \'$tagName\';');
+    var list = await database.rawQuery(
+        'select count(anime_id) cnt from anime where tag_name = \'$tagName\';');
     return list[0]["cnt"] as int;
   }
 
-  static Future<int> getCheckedEpisodeCntByAnimeId(int animeId, {int reviewNumber = 0}) async {
-    var list = await database.rawQuery('select count(anime_id) cnt from history where anime_id = $animeId and review_number = $reviewNumber;');
+  static Future<int> getCheckedEpisodeCntByAnimeId(int animeId,
+      {int reviewNumber = 0}) async {
+    var list = await database.rawQuery(
+        'select count(anime_id) cnt from history where anime_id = $animeId and review_number = $reviewNumber;');
     return list[0]["cnt"] as int;
   }
 
-  static Future<List<Anime>> getAllAnimeBytagName(String tagName, int offset, int number, {required AnimeSortCond animeSortCond}) async {
+  static Future<List<Anime>> getAllAnimeBytagName(
+      String tagName, int offset, int number,
+      {required AnimeSortCond animeSortCond}) async {
     // 简化实现，因为这个方法主要被AnimeListPage使用，确保功能存在
-    var list = await database.rawQuery('select * from anime where tag_name = \'$tagName\' limit $number offset $offset;');
+    var list = await database.rawQuery(
+        'select * from anime where tag_name = \'$tagName\' limit $number offset $offset;');
     List<Anime> res = [];
     for (var row in list) {
       res.add(await AnimeDao.row2Bean(row, queryCheckedEpisodeCnt: true));
@@ -495,18 +593,22 @@ class SqliteUtil {
   }
 
   static Future<List<int>> getAnimeCntPerTag() async {
-    var list = await database.rawQuery('select count(anime_id) as anime_cnt from tag left outer join anime on anime.tag_name = tag.tag_name group by tag.tag_name order by tag.tag_order;');
+    var list = await database.rawQuery(
+        'select count(anime_id) as anime_cnt from tag left outer join anime on anime.tag_name = tag.tag_name group by tag.tag_name order by tag.tag_order;');
     return list.map((e) => e['anime_cnt'] as int).toList();
   }
 
   static Future<Anime> getCustomAnimeByAnimeName(String animeName) async {
-    var list = await database.rawQuery('select * from anime where anime_name = \'${EscapeUtil.escapeStr(animeName)}\' and (anime_url is null or length(anime_url) = 0);');
+    var list = await database.rawQuery(
+        'select * from anime where anime_name = \'${EscapeUtil.escapeStr(animeName)}\' and (anime_url is null or length(anime_url) = 0);');
     if (list.isEmpty) return Anime(animeName: animeName, animeEpisodeCnt: 0);
     return await AnimeDao.row2Bean(list[0], queryCheckedEpisodeCnt: true);
   }
 
-  static Future<List<Anime>> getCustomAnimesIfContainAnimeName(String animeName) async {
-    var list = await database.rawQuery('select * from anime where anime_name like \'%${EscapeUtil.escapeStr(animeName)}%\' and (anime_url is null or length(anime_url) = 0);');
+  static Future<List<Anime>> getCustomAnimesIfContainAnimeName(
+      String animeName) async {
+    var list = await database.rawQuery(
+        'select * from anime where anime_name like \'%${EscapeUtil.escapeStr(animeName)}%\' and (anime_url is null or length(anime_url) = 0);');
     List<Anime> res = [];
     for (var row in list) {
       res.add(await AnimeDao.row2Bean(row, queryCheckedEpisodeCnt: true));
@@ -514,8 +616,15 @@ class SqliteUtil {
     return res;
   }
 
-  static Future<int> count({required String tableName, String? columnName = 'id', String? where, List<Object?>? whereArgs}) async {
-    final rows = await database.query(tableName, columns: ['COUNT(${columnName ?? "*"})'], where: where, whereArgs: whereArgs);
+  static Future<int> count(
+      {required String tableName,
+      String? columnName = 'id',
+      String? where,
+      List<Object?>? whereArgs}) async {
+    final rows = await database.query(tableName,
+        columns: ['COUNT(${columnName ?? "*"})'],
+        where: where,
+        whereArgs: whereArgs);
     if (rows.isEmpty) return 0;
     return rows.first.values.first as int;
   }
