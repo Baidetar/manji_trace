@@ -1,7 +1,7 @@
 name: manji_trace
 description: 漫迹
 publish_to: "none"
-version: 1.16.0+5
+version: 1.16.0+6
 environment:
   sdk: ">=3.3.4 <4.0.0"
 
@@ -71,6 +71,14 @@ dev_dependencies:
     git:
       url: https://github.com/linyi102/shell_executor
       ref: main
+
+hooks:
+  pre_gen_src_dir_dart_build: 
+    user_defines:
+      sqlite3:
+        source: system
+        name_windows: winsqlite3
+        name: sqlite3
 
 flutter:
   uses-material-design: true

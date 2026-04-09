@@ -31,6 +31,7 @@ class JournalNoteDao {
     await addColumnContentDigest();
     await addColumnSummary();
     await migrateLegacyContentToMarkdown();
+    await clearDuplicatedDbContent();
   }
 
   // 添加images列
@@ -107,6 +108,7 @@ class JournalNoteDao {
         await database.update(
           'journal_note',
           {
+            'content': '',
             'md_rel_path': meta.relativePath,
             'content_digest': meta.digest,
             'summary': meta.summary,
@@ -125,23 +127,38 @@ class JournalNoteDao {
     }
   }
 
+  static Future<void> clearDuplicatedDbContent() async {
+    await database.rawUpdate('''
+      UPDATE journal_note
+      SET content = ''
+      WHERE (md_rel_path IS NOT NULL AND md_rel_path != '')
+        AND (content IS NOT NULL AND length(content) > 0)
+    ''');
+  }
+
   // map转为对象
-  static Future<JournalNote> row2bean(Map row) async {
+  static Future<JournalNote> row2bean(Map row,
+      {String? preloadedMdContent}) async {
     int noteId = row['id'] as int;
-    List<RelativeLocalImage> images = await ImageDao.getRelativeLocalImgsByNoteId(noteId, noteType: NoteType.journal);
+    List<RelativeLocalImage> images =
+        await ImageDao.getRelativeLocalImgsByNoteId(noteId,
+            noteType: NoteType.journal);
     final String dbContent = row['content'] as String? ?? "";
     final String mdRelPath = row['md_rel_path'] as String? ?? "";
-    final String? mdContent = await JournalMarkdownUtil.readMarkdown(mdRelPath);
+    final String? mdContent =
+        preloadedMdContent ?? await JournalMarkdownUtil.readMarkdown(mdRelPath);
     final String storedDigest = row['content_digest'] as String? ?? '';
     if (mdRelPath.isNotEmpty && mdContent == null) {
       AppLog.warn('日记Markdown文件缺失，已回退DB内容: id=$noteId, path=$mdRelPath');
+    } else if (mdRelPath.isEmpty && dbContent.trim().isNotEmpty) {
+      AppLog.warn('日记缺少Markdown路径，使用DB旧内容回退: id=$noteId');
     } else if (mdContent != null && storedDigest.isNotEmpty) {
       final String actualDigest = JournalMarkdownUtil.buildDigest(mdContent);
       if (actualDigest != storedDigest) {
         AppLog.warn('日记Markdown摘要校验不一致: id=$noteId, path=$mdRelPath');
       }
     }
-    
+
     return JournalNote(
       id: noteId,
       title: row['title'] as String? ?? "",
@@ -158,13 +175,59 @@ class JournalNoteDao {
     AppLog.info("sql: getAllJournalNotes");
     List<JournalNote> notes = [];
 
+    final String keyword = searchKeyword?.trim() ?? '';
+    if (keyword.isNotEmpty) {
+      final int targetOffset = pageParams.getOffset();
+      int matchedSkipped = 0;
+      int dbOffset = 0;
+      const int batchSize = 120;
+
+      while (notes.length < pageParams.pageSize) {
+        final rows = await database.query(
+          'journal_note',
+          orderBy: 'create_time desc',
+          limit: batchSize,
+          offset: dbOffset,
+        );
+        if (rows.isEmpty) {
+          break;
+        }
+        dbOffset += rows.length;
+
+        for (final row in rows) {
+          final String title = row['title'] as String? ?? '';
+          final String summary = row['summary'] as String? ?? '';
+          bool matched = _containsKeyword(title, keyword) ||
+              _containsKeyword(summary, keyword);
+          String? mdContent;
+          if (!matched) {
+            final String mdRelPath = row['md_rel_path'] as String? ?? '';
+            mdContent = await JournalMarkdownUtil.readMarkdown(mdRelPath);
+            matched = _containsKeyword(mdContent ?? '', keyword);
+          }
+          if (!matched) {
+            continue;
+          }
+          if (matchedSkipped < targetOffset) {
+            matchedSkipped++;
+            continue;
+          }
+
+          notes.add(await row2bean(row, preloadedMdContent: mdContent));
+          if (notes.length >= pageParams.pageSize) {
+            break;
+          }
+        }
+      }
+      return notes;
+    }
+
     String? where;
     List<Object?>? whereArgs;
     if (searchKeyword != null && searchKeyword.trim().isNotEmpty) {
-      where =
-        "title LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\' OR content LIKE ? ESCAPE '\\'";
+      where = "title LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\'";
       final String likeKeyword = _buildLikeKeyword(searchKeyword);
-      whereArgs = [likeKeyword, likeKeyword, likeKeyword];
+      whereArgs = [likeKeyword, likeKeyword];
     }
 
     // String whereClause = "";
@@ -196,9 +259,9 @@ class JournalNoteDao {
     List<Object?> whereArgs = [];
     if (searchKeyword != null && searchKeyword.isNotEmpty) {
       whereClause =
-          "where title LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\' OR content LIKE ? ESCAPE '\\'";
+          "where title LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\'";
       final String likeKeyword = _buildLikeKeyword(searchKeyword);
-      whereArgs = [likeKeyword, likeKeyword, likeKeyword];
+      whereArgs = [likeKeyword, likeKeyword];
     }
 
     final List<Map<String, Object?>> list = await database.rawQuery(
@@ -233,7 +296,7 @@ class JournalNoteDao {
       'journal_note',
       {
         'title': note.title,
-        'content': note.content,
+        'content': '',
         'summary': JournalMarkdownUtil.buildSummary(note.content),
         'create_time': createTime,
         'update_time': now,
@@ -264,7 +327,7 @@ class JournalNoteDao {
       'journal_note',
       {
         'title': note.title,
-        'content': note.content,
+        'content': '',
         'md_rel_path': meta.relativePath,
         'content_digest': meta.digest,
         'summary': meta.summary,
@@ -371,5 +434,9 @@ class JournalNoteDao {
         .replaceAll('%', '\\%')
         .replaceAll('_', '\\_');
     return '%${escaped.trim()}%';
+  }
+
+  static bool _containsKeyword(String text, String keyword) {
+    return text.toLowerCase().contains(keyword.toLowerCase());
   }
 }

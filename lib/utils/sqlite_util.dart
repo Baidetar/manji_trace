@@ -75,6 +75,9 @@ class SqliteUtil {
 
     // 为笔记增加创建时间和修改时间列，主要用于评分时显示
     await SqliteUtil.addColumnTwoTimeToEpisodeNote();
+    await SqliteUtil.addColumnMdRelPathToEpisodeNote();
+    await SqliteUtil.addColumnContentDigestToEpisodeNote();
+    await SqliteUtil.addColumnSummaryToEpisodeNote();
     // 为图片表增加顺序列，支持自定义排序
     await SqliteUtil.addColumnOrderIdxToImage();
     // 为图片表增加笔记类型列，支持独立笔记
@@ -406,6 +409,33 @@ class SqliteUtil {
         tableName: 'episode_note',
         columnName: 'update_time',
         columnType: 'TEXT');
+  }
+
+  static Future<void> addColumnMdRelPathToEpisodeNote() async {
+    await addColumnName(
+      tableName: 'episode_note',
+      columnName: 'md_rel_path',
+      columnType: 'TEXT NOT NULL DEFAULT \'\'',
+      logName: 'addColumnMdRelPathToEpisodeNote',
+    );
+  }
+
+  static Future<void> addColumnContentDigestToEpisodeNote() async {
+    await addColumnName(
+      tableName: 'episode_note',
+      columnName: 'content_digest',
+      columnType: 'TEXT NOT NULL DEFAULT \'\'',
+      logName: 'addColumnContentDigestToEpisodeNote',
+    );
+  }
+
+  static Future<void> addColumnSummaryToEpisodeNote() async {
+    await addColumnName(
+      tableName: 'episode_note',
+      columnName: 'summary',
+      columnType: 'TEXT NOT NULL DEFAULT \'\'',
+      logName: 'addColumnSummaryToEpisodeNote',
+    );
   }
 
   static Future<void> createTableEpisodeNote() async {

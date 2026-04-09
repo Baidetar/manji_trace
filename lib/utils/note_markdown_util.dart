@@ -6,20 +6,20 @@ import 'package:manji_trace/utils/log.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:path/path.dart' as p;
 
-class JournalMarkdownMeta {
+class NoteMarkdownMeta {
   final String relativePath;
   final String digest;
   final String summary;
 
-  const JournalMarkdownMeta({
+  const NoteMarkdownMeta({
     required this.relativePath,
     required this.digest,
     required this.summary,
   });
 }
 
-class JournalMarkdownUtil {
-  static const String _rootRelative = 'notes/journal';
+class NoteMarkdownUtil {
+  static const String _rootRelative = 'notes/note';
   static const int _maxCacheEntries = 300;
   static final Map<String, _MarkdownCacheEntry> _cache = {};
 
@@ -44,13 +44,10 @@ class JournalMarkdownUtil {
 
   static String buildSummary(String content, {int maxLen = 120}) {
     String text = content;
-    text =
-        text.replaceAll(RegExp(r'```[\s\S]*?```'), ' '); // Remove code blocks.
-    text = text.replaceAll(RegExp(r'`[^`]*`'), ' '); // Remove inline code.
-    text =
-        text.replaceAll(RegExp(r'!\[[^\]]*\]\([^)]*\)'), ' '); // Remove images.
-    text = text.replaceAll(
-        RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1'); // Keep link text.
+    text = text.replaceAll(RegExp(r'```[\s\S]*?```'), ' ');
+    text = text.replaceAll(RegExp(r'`[^`]*`'), ' ');
+    text = text.replaceAll(RegExp(r'!\[[^\]]*\]\([^)]*\)'), ' ');
+    text = text.replaceAll(RegExp(r'\[([^\]]*)\]\([^)]*\)'), r'$1');
     text = text.replaceAll(
         RegExp(r'^\s{0,3}(#{1,6}|>|-\s\[.?\]|[-*+])\s*', multiLine: true), '');
     text = text.replaceAll(RegExp(r'[*_~]+'), '');
@@ -62,7 +59,7 @@ class JournalMarkdownUtil {
     return '${trimmed.substring(0, maxLen).trimRight()}...';
   }
 
-  static Future<JournalMarkdownMeta> writeMarkdown({
+  static Future<NoteMarkdownMeta> writeMarkdown({
     required int noteId,
     required String createTime,
     required String content,
@@ -79,7 +76,7 @@ class JournalMarkdownUtil {
     final int modifiedMs = (await file.stat()).modified.millisecondsSinceEpoch;
     _putCache(relativePath, content, modifiedMs);
 
-    return JournalMarkdownMeta(
+    return NoteMarkdownMeta(
       relativePath: relativePath,
       digest: buildDigest(content),
       summary: buildSummary(content),
@@ -106,7 +103,7 @@ class JournalMarkdownUtil {
       _putCache(relativePath, content, modifiedMs);
       return content;
     } catch (e) {
-      AppLog.warn('读取日记Markdown失败($relativePath): $e');
+      AppLog.warn('读取笔记Markdown失败($relativePath): $e');
       return null;
     }
   }
@@ -122,7 +119,7 @@ class JournalMarkdownUtil {
       }
       _cache.remove(relativePath);
     } catch (e) {
-      AppLog.warn('删除日记Markdown失败($relativePath): $e');
+      AppLog.warn('删除笔记Markdown失败($relativePath): $e');
     }
   }
 

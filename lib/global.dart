@@ -13,6 +13,7 @@ import 'package:manji_trace/controllers/remote_controller.dart';
 import 'package:manji_trace/controllers/update_record_controller.dart';
 import 'package:manji_trace/pages/anime_collection/checklist_controller.dart';
 import 'package:manji_trace/controllers/sync_service.dart';
+import 'package:manji_trace/dao/note_dao.dart';
 import 'package:manji_trace/utils/dio_util.dart';
 import 'package:manji_trace/utils/image_util.dart';
 import 'package:manji_trace/utils/platform.dart';
@@ -57,7 +58,7 @@ class Global {
     // MediaKit.ensureInitialized();
     // 获取SharedPreferences
     await SPUtil.getInstance();
-    
+
     // 初始化设备信息
     await _initDeviceInfo();
 
@@ -69,6 +70,9 @@ class Global {
     DioUtil.init();
     // 确保数据库表最新结构
     await SqliteUtil.ensureDBTable();
+    // 一次性迁移旧版集/评价笔记正文到Markdown，并清理DB冗余正文。
+    await NoteDao.migrateLegacyContentToMarkdown();
+    await NoteDao.clearDuplicatedDbContent();
     // put常用的getController
     await _putGetController();
     // 设置Windows窗口

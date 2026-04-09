@@ -11,13 +11,81 @@ import 'package:manji_trace/models/note_filter.dart';
 import 'package:manji_trace/models/relative_local_image.dart';
 import 'package:manji_trace/models/enum/note_type.dart';
 import 'package:manji_trace/utils/escape_util.dart';
+import 'package:manji_trace/utils/note_markdown_util.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class NoteDao {
   static Database get database => SqliteUtil.database;
 
+  static Future<void> migrateLegacyContentToMarkdown() async {
+    final List<Map<String, Object?>> rows = await database.rawQuery('''
+      SELECT note_id, note_content, create_time, md_rel_path
+      FROM episode_note
+      WHERE note_content IS NOT NULL
+        AND length(trim(note_content)) > 0
+        AND (md_rel_path IS NULL OR md_rel_path = '')
+      ORDER BY note_id ASC
+    ''');
+
+    if (rows.isEmpty) {
+      return;
+    }
+
+    int migratedCount = 0;
+    for (final row in rows) {
+      final int noteId = row['note_id'] as int? ?? 0;
+      if (noteId <= 0) {
+        continue;
+      }
+      final String legacyContent = row['note_content'] as String? ?? '';
+      if (legacyContent.trim().isEmpty) {
+        continue;
+      }
+      final String createTime = row['create_time'] as String? ?? '';
+      final String oldRelPath = row['md_rel_path'] as String? ?? '';
+
+      try {
+        final String content = EscapeUtil.restoreEscapeStr(legacyContent);
+        final meta = await NoteMarkdownUtil.writeMarkdown(
+          noteId: noteId,
+          createTime: createTime,
+          content: content,
+          preferredRelativePath: oldRelPath,
+        );
+        await database.update(
+          'episode_note',
+          {
+            'note_content': '',
+            'md_rel_path': meta.relativePath,
+            'content_digest': meta.digest,
+            'summary': meta.summary,
+          },
+          where: 'note_id = ?',
+          whereArgs: [noteId],
+        );
+        migratedCount++;
+      } catch (e) {
+        AppLog.warn('迁移笔记Markdown失败(noteId=$noteId): $e');
+      }
+    }
+
+    if (migratedCount > 0) {
+      AppLog.info('已迁移历史集/评价笔记到Markdown: $migratedCount');
+    }
+  }
+
+  static Future<void> clearDuplicatedDbContent() async {
+    await database.rawUpdate('''
+      UPDATE episode_note
+      SET note_content = ''
+      WHERE (md_rel_path IS NOT NULL AND md_rel_path != '')
+        AND (note_content IS NOT NULL AND length(note_content) > 0)
+    ''');
+  }
+
   // map转为对象
-  static Future<Note> row2bean(Map row, {bool searchAnime = false}) async {
+  static Future<Note> row2bean(Map row,
+      {bool searchAnime = false, String? preloadedContent}) async {
     // 查询这个笔记的图片
     int noteId = row['note_id'] as int;
     List<RelativeLocalImage> relativeLocalImages =
@@ -27,11 +95,14 @@ class NoteDao {
             row['anime_id']) // 查看所有评价列表时，每个笔记需要知道动漫信息
         : Anime(animeName: "无名", animeEpisodeCnt: 0); // 动漫详细页中的评价列表不需要再查询动漫
 
+    final String noteContent =
+        preloadedContent ?? await _resolveNoteContentFromRow(row);
+
     return Note(
         id: noteId,
         anime: anime,
         episode: Episode(0, 1),
-        noteContent: row['note_content'] as String,
+        noteContent: noteContent,
         createTime: row['create_time'] as String? ?? "",
         updateTime: row['update_time'] as String? ?? "",
         relativeLocalImages: relativeLocalImages,
@@ -44,6 +115,62 @@ class NoteDao {
     AppLog.info("sql: getRateNotes");
     List<Note> rateNotes = [];
 
+    final String keyword = noteFilter?.noteContentKeyword.trim() ?? '';
+    if (keyword.isNotEmpty) {
+      final int targetOffset = pageParams.getOffset();
+      final int pageSize = pageParams.pageSize;
+      int matchedSkipped = 0;
+      int dbOffset = 0;
+      const int batchSize = 120;
+
+      while (rateNotes.length < pageSize) {
+        final rows = await database.query(
+          'episode_note',
+          columns: [
+            'anime_id',
+            'note_id',
+            'note_content',
+            'md_rel_path',
+            'content_digest',
+            'create_time',
+            'update_time'
+          ],
+          where: [
+            'episode_number = 0',
+            if (noteFilter?.animeId != null) 'anime_id=${noteFilter!.animeId}',
+            if (noteFilter?.animeNameKeyword.isNotEmpty == true)
+              "anime_id in (select anime_id from anime where anime_name like '%${EscapeUtil.escapeStr(noteFilter!.animeNameKeyword)}%')"
+          ].join(' and '),
+          orderBy: 'create_time desc',
+          limit: batchSize,
+          offset: dbOffset,
+        );
+
+        if (rows.isEmpty) {
+          break;
+        }
+
+        dbOffset += rows.length;
+        for (final row in rows) {
+          final String content = await _resolveNoteContentFromRow(row);
+          if (!_containsKeyword(content, keyword)) {
+            continue;
+          }
+          if (matchedSkipped < targetOffset) {
+            matchedSkipped++;
+            continue;
+          }
+
+          rateNotes.add(await row2bean(row,
+              searchAnime: true, preloadedContent: content));
+          if (rateNotes.length >= pageSize) {
+            break;
+          }
+        }
+      }
+      return rateNotes;
+    }
+
     int? animeId = noteFilter?.animeId;
     final rows = await database.query(
       'episode_note',
@@ -51,6 +178,8 @@ class NoteDao {
         'anime_id',
         'note_id',
         'note_content',
+        'md_rel_path',
+        'content_digest',
         'create_time',
         'update_time'
       ],
@@ -59,8 +188,6 @@ class NoteDao {
         if (animeId != null) 'anime_id=$animeId',
         if (noteFilter?.animeNameKeyword.isNotEmpty == true)
           "anime_id in (select anime_id from anime where anime_name like '%${EscapeUtil.escapeStr(noteFilter!.animeNameKeyword)}%')",
-        if (noteFilter?.noteContentKeyword.isNotEmpty == true)
-          "note_content like '%${EscapeUtil.escapeStr(noteFilter!.noteContentKeyword)}%'"
       ].join(' and '),
       orderBy: 'create_time desc',
       limit: pageParams.pageSize,
@@ -88,7 +215,7 @@ class NoteDao {
     AppLog.info("sql: getRateNotesByAnimeId");
     List<Note> rateNotes = [];
     List<Map<String, Object?>> list = await database.rawQuery('''
-      select note_id, note_content, create_time, update_time from episode_note
+      select note_id, note_content, md_rel_path, content_digest, create_time, update_time from episode_note
       where anime_id = $animeId and episode_number = 0 order by note_id desc;
     ''');
 
@@ -136,13 +263,36 @@ class NoteDao {
 
   static updateNoteContentByNoteId(int noteId, String noteContent) async {
     AppLog.info("sql: updateEpisodeNoteContent($noteId)");
-    // AppLog.info("sql: updateEpisodeNoteContent($noteId, $noteContent)");
-    noteContent = EscapeUtil.escapeStr(noteContent);
-    database.rawUpdate('''
-    update episode_note
-    set note_content = '$noteContent', update_time = '${TimeUtil.getDateTimeNowStr()}'
-    where note_id = $noteId;
-    ''');
+    final row = await database.query(
+      'episode_note',
+      columns: ['create_time', 'md_rel_path'],
+      where: 'note_id = ?',
+      whereArgs: [noteId],
+      limit: 1,
+    );
+    if (row.isEmpty) {
+      return;
+    }
+    final String createTime = row.first['create_time'] as String? ?? '';
+    final String oldRelPath = row.first['md_rel_path'] as String? ?? '';
+    final meta = await NoteMarkdownUtil.writeMarkdown(
+      noteId: noteId,
+      createTime: createTime,
+      content: noteContent,
+      preferredRelativePath: oldRelPath,
+    );
+    await database.update(
+      'episode_note',
+      {
+        'note_content': '',
+        'md_rel_path': meta.relativePath,
+        'content_digest': meta.digest,
+        'summary': meta.summary,
+        'update_time': TimeUtil.getDateTimeNowStr(),
+      },
+      where: 'note_id = ?',
+      whereArgs: [noteId],
+    );
   }
 
   static updateNoteCreateTimeByNoteId(int noteId, String createTime) async {
@@ -196,7 +346,7 @@ class NoteDao {
   static Future<Note> getNoteContentAndImagesByNoteId(int noteId) async {
     AppLog.info("getNoteByNoteId(noteId=$noteId)");
     var lm1 = await database.rawQuery('''
-      select anime_id, note_id, episode_number, review_number, note_content from episode_note
+      select anime_id, note_id, episode_number, review_number, note_content, md_rel_path, content_digest, create_time from episode_note
       where note_id = $noteId;
       ''');
     Note note = Note(
@@ -206,7 +356,7 @@ class NoteDao {
         relativeLocalImages: [],
         imgUrls: []);
     if (lm1.isNotEmpty) {
-      note.noteContent = lm1[0]['note_content'] as String;
+      note.noteContent = await _resolveNoteContentFromRow(lm1[0]);
       note.id = noteId;
       // note.anime =
       //     await SqliteUtil.getAnimeByAnimeId(lm1[0]['anime_id'] as int);
@@ -223,7 +373,7 @@ class NoteDao {
         "sql: getEpisodeNoteByAnimeIdAndEpisodeNumberAndReviewNumber(episodeNumber=${episode.number}, review_number=${anime.reviewNumber})");
     // 查询内容
     var lm1 = await database.rawQuery('''
-      select note_id, note_content from episode_note
+      select note_id, note_content, md_rel_path, content_digest, create_time from episode_note
       where anime_id = ${anime.animeId} and episode_number = ${episode.number} and review_number = ${anime.reviewNumber};
       ''');
     if (lm1.isEmpty) {
@@ -234,7 +384,7 @@ class NoteDao {
         anime: anime, episode: episode, relativeLocalImages: [], imgUrls: []);
     episodeNote.id = lm1[0]['note_id'] as int;
     // 获取笔记内容
-    episodeNote.noteContent = lm1[0]['note_content'] as String;
+    episodeNote.noteContent = await _resolveNoteContentFromRow(lm1[0]);
 
     // AppLog.info("笔记${episodeNote.episodeNoteId}内容：${episodeNote.noteContent}");
     // 查询图片
@@ -295,17 +445,73 @@ class NoteDao {
 
     // 优化：不会筛选出笔记内容和图片都没有的行
     String likeAnimeNameSql = "";
-    String likeNoteContentSql = "";
+    final String keyword = noteFilter.noteContentKeyword.trim();
+    if (keyword.isNotEmpty) {
+      int matchedSkipped = 0;
+      int dbOffset = 0;
+      const int batchSize = 120;
+
+      while (episodeNotes.length < number) {
+        String sql = '''
+      select anime.*, history.date, episode_note.episode_number, episode_note.review_number, episode_note.note_id, episode_note.note_content, episode_note.md_rel_path, episode_note.content_digest, episode_note.create_time, episode_note.update_time
+      from history, episode_note, anime
+      where history.anime_id = episode_note.anime_id and history.episode_number = episode_note.episode_number
+          and history.review_number = episode_note.review_number
+          and anime.anime_id = history.anime_id
+          ${noteFilter.animeNameKeyword.isNotEmpty ? "and anime.anime_name like '%${EscapeUtil.escapeStr(noteFilter.animeNameKeyword)}%'" : ''}
+      order by history.date desc
+      limit $batchSize offset $dbOffset;
+    ''';
+        var rows = await database.rawQuery(sql);
+        if (rows.isEmpty) {
+          break;
+        }
+        dbOffset += rows.length;
+
+        for (final item in rows) {
+          final String noteContent = await _resolveNoteContentFromRow(item);
+          if (!_containsKeyword(noteContent, keyword)) {
+            continue;
+          }
+          if (matchedSkipped < offset) {
+            matchedSkipped++;
+            continue;
+          }
+
+          Anime anime = await AnimeDao.row2Bean(item);
+          Episode episode = Episode(
+              item['episode_number'] as int, item['review_number'] as int,
+              dateTime: item['date'] as String,
+              startNumber: EpisodeUtil.getFakeEpisodeStartNumber(anime));
+          List<RelativeLocalImage> relativeLocalImages =
+              await getRelativeLocalImgsByNoteId(item['note_id'] as int);
+          Note episodeNote = Note(
+              id: item['note_id'] as int,
+              anime: anime,
+              episode: episode,
+              noteContent: noteContent,
+              relativeLocalImages: relativeLocalImages,
+              imgUrls: []);
+          episodeNotes.add(restoreEscapeEpisodeNote(episodeNote));
+          if (episodeNotes.length >= number) {
+            break;
+          }
+        }
+      }
+      return episodeNotes;
+    }
+
+    String likeSummarySql = "";
     if (noteFilter.animeNameKeyword.isNotEmpty) {
       likeAnimeNameSql =
           "and anime.anime_name like '%${EscapeUtil.escapeStr(noteFilter.animeNameKeyword)}%'";
     }
     if (noteFilter.noteContentKeyword.isNotEmpty) {
-      likeNoteContentSql =
-          "and note_content like '%${EscapeUtil.escapeStr(noteFilter.noteContentKeyword)}%'";
+      likeSummarySql =
+          "and summary like '%${EscapeUtil.escapeStr(noteFilter.noteContentKeyword)}%'";
     }
     String sql = '''
-      select anime.*, history.date, episode_note.episode_number, episode_note.review_number, episode_note.note_id, episode_note.note_content
+      select anime.*, history.date, episode_note.episode_number, episode_note.review_number, episode_note.note_id, episode_note.note_content, episode_note.md_rel_path, episode_note.content_digest, episode_note.create_time, episode_note.update_time
       from history, episode_note, anime
       where history.anime_id = episode_note.anime_id and history.episode_number = episode_note.episode_number
           and history.review_number = episode_note.review_number
@@ -313,10 +519,10 @@ class NoteDao {
           $likeAnimeNameSql
           and episode_note.note_id in(
               select distinct episode_note.note_id
-              from episode_note inner join image on episode_note.note_id = image.note_id and image.note_type = ${NoteType.episode.value} $likeNoteContentSql
+          from episode_note inner join image on episode_note.note_id = image.note_id and image.note_type = ${NoteType.episode.value} $likeSummarySql
               union
               select episode_note.note_id
-              from episode_note where note_content is not null and length(note_content) > 0 $likeNoteContentSql
+          from episode_note where summary is not null and length(summary) > 0 $likeSummarySql
           )
       order by history.date desc
       limit $number offset $offset;
@@ -330,12 +536,13 @@ class NoteDao {
           startNumber: EpisodeUtil.getFakeEpisodeStartNumber(anime));
       List<RelativeLocalImage> relativeLocalImages =
           await getRelativeLocalImgsByNoteId(item['note_id'] as int);
+      final String noteContent = await _resolveNoteContentFromRow(item);
       Note episodeNote = Note(
           id: item['note_id'] as int,
           // 忘记设置了，导致都是进入笔记0
           anime: anime,
           episode: episode,
-          noteContent: item['note_content'] as String,
+          noteContent: noteContent,
           relativeLocalImages: relativeLocalImages,
           imgUrls: []);
       // // 如果没有图片，且笔记内容为空，则不添加。会导致无法显示分页查询
@@ -356,6 +563,18 @@ class NoteDao {
   // 先删除与笔记相关的图片，再删除该笔记(id唯一，不用在意reviewNumber，而且删除集笔记后当进入详情页会自动创建空笔记)
   static Future<bool> deleteNoteById(int noteId) async {
     AppLog.info("deleteNoteById(noteId=$noteId)");
+
+    final rows = await database.query(
+      'episode_note',
+      columns: ['md_rel_path'],
+      where: 'note_id = ?',
+      whereArgs: [noteId],
+      limit: 1,
+    );
+    if (rows.isNotEmpty) {
+      final String relPath = rows.first['md_rel_path'] as String? ?? '';
+      await NoteMarkdownUtil.deleteMarkdown(relPath);
+    }
 
     int num = await database.rawDelete('''
     delete from image
@@ -386,14 +605,14 @@ class NoteDao {
 
     // 内容不为空的笔记数量
     final rows1 = await database.rawQuery('''
-      select count(note_id) total from episode_note where episode_number > 0 and length(note_content) != 0;
+      select count(note_id) total from episode_note where episode_number > 0 and length(summary) != 0;
     ''');
     int notEmptyContentNoteCnt = rows1.first['total'] as int;
 
     // 内容为空，但添加了图片的笔记数量
     final rows2 = await database.rawQuery('''
       select count(distinct note_id) total from image where note_type = ${NoteType.episode.value} and note_id in
-        (select note_id from episode_note where episode_number > 0 and length(note_content) = 0)
+        (select note_id from episode_note where episode_number > 0 and length(summary) = 0)
     ''');
     int emptyContentButExistImageNoteCnt = rows2.first['total'] as int;
 
@@ -408,5 +627,33 @@ class NoteDao {
       select count(note_id) total from episode_note where episode_number == 0;
     ''');
     return rows.first['total'] as int;
+  }
+
+  static Future<String> _resolveNoteContentFromRow(Map row,
+      {String? preloadedMdContent}) async {
+    final String dbContent = row['note_content'] as String? ?? '';
+    final String mdRelPath = row['md_rel_path'] as String? ?? '';
+    final String storedDigest = row['content_digest'] as String? ?? '';
+    final String? mdContent =
+        preloadedMdContent ?? await NoteMarkdownUtil.readMarkdown(mdRelPath);
+
+    if (mdContent != null) {
+      if (storedDigest.isNotEmpty) {
+        final String actualDigest = NoteMarkdownUtil.buildDigest(mdContent);
+        if (actualDigest != storedDigest) {
+          AppLog.warn('笔记Markdown摘要校验不一致: path=$mdRelPath');
+        }
+      }
+      return mdContent;
+    }
+
+    if (mdRelPath.isNotEmpty) {
+      AppLog.warn('笔记Markdown文件缺失，已回退DB内容: path=$mdRelPath');
+    }
+    return EscapeUtil.restoreEscapeStr(dbContent);
+  }
+
+  static bool _containsKeyword(String text, String keyword) {
+    return text.toLowerCase().contains(keyword.toLowerCase());
   }
 }

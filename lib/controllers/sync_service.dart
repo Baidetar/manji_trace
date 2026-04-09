@@ -12,12 +12,15 @@ import 'package:manji_trace/models/params/result.dart';
 import 'package:manji_trace/models/sync_version_model.dart';
 import 'package:manji_trace/utils/backup_util.dart';
 import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/journal_markdown_util.dart';
 import 'package:manji_trace/utils/log.dart';
+import 'package:manji_trace/utils/note_markdown_util.dart';
 import 'package:manji_trace/utils/sp_util.dart';
 import 'package:manji_trace/utils/sync_change_log_util.dart';
 import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/utils/toast_util.dart';
 import 'package:manji_trace/utils/webdav_util.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class SyncService extends GetxController {
@@ -84,24 +87,24 @@ class SyncService extends GetxController {
   set lastDeltaFallbackTime(int val) =>
       SPUtil.setInt("last_delta_fallback_time", val);
 
-    int get lastDeltaSkippedTotal =>
+  int get lastDeltaSkippedTotal =>
       SPUtil.getInt("last_delta_skipped_total", defaultValue: 0);
-    set lastDeltaSkippedTotal(int val) =>
+  set lastDeltaSkippedTotal(int val) =>
       SPUtil.setInt("last_delta_skipped_total", val);
 
-    int get lastDeltaSkippedByLocalNewer =>
+  int get lastDeltaSkippedByLocalNewer =>
       SPUtil.getInt("last_delta_skipped_local_newer", defaultValue: 0);
-    set lastDeltaSkippedByLocalNewer(int val) =>
+  set lastDeltaSkippedByLocalNewer(int val) =>
       SPUtil.setInt("last_delta_skipped_local_newer", val);
 
-    int get lastDeltaSkippedByTombstone =>
+  int get lastDeltaSkippedByTombstone =>
       SPUtil.getInt("last_delta_skipped_tombstone", defaultValue: 0);
-    set lastDeltaSkippedByTombstone(int val) =>
+  set lastDeltaSkippedByTombstone(int val) =>
       SPUtil.setInt("last_delta_skipped_tombstone", val);
 
-    int get lastDeltaSkippedTime =>
+  int get lastDeltaSkippedTime =>
       SPUtil.getInt("last_delta_skipped_time", defaultValue: 0);
-    set lastDeltaSkippedTime(int val) =>
+  set lastDeltaSkippedTime(int val) =>
       SPUtil.setInt("last_delta_skipped_time", val);
 
   bool get needDeltaChainRebase =>
@@ -109,9 +112,9 @@ class SyncService extends GetxController {
   set needDeltaChainRebase(bool val) =>
       SPUtil.setBool("need_delta_chain_rebase", val);
 
-    int get lastTombstonePruneTime =>
+  int get lastTombstonePruneTime =>
       SPUtil.getInt("last_tombstone_prune_time", defaultValue: 0);
-    set lastTombstonePruneTime(int val) =>
+  set lastTombstonePruneTime(int val) =>
       SPUtil.setInt("last_tombstone_prune_time", val);
 
   /// 启动时检查同步
@@ -565,7 +568,7 @@ class SyncService extends GetxController {
                   result = Result.success(
                     true,
                     msg: skippedTotal > 0
-                      ? '增量同步完成(应用:$appliedTotal, 跳过:$skippedTotal, 本地较新:$skippedByLocalNewerTotal, 已删除保护:$skippedByTombstoneTotal)'
+                        ? '增量同步完成(应用:$appliedTotal, 跳过:$skippedTotal, 本地较新:$skippedByLocalNewerTotal, 已删除保护:$skippedByTombstoneTotal)'
                         : '已通过增量链快速同步数据库($appliedTotal条变更)',
                   );
                 } else {
@@ -752,8 +755,8 @@ class SyncService extends GetxController {
       final Map<String, dynamic> localMeta = entry.value;
       final Map<String, dynamic>? remoteMeta = remoteIndex[key];
 
-      final bool needUpload = remoteMeta == null ||
-          !_imageMetaMatches(localMeta, remoteMeta);
+      final bool needUpload =
+          remoteMeta == null || !_imageMetaMatches(localMeta, remoteMeta);
       if (!needUpload) {
         continue;
       }
@@ -814,7 +817,7 @@ class SyncService extends GetxController {
     final String remoteImageBaseDir = "$remoteDir/$imageRemoteRootDir";
     for (final entry in remoteIndex.entries) {
       final String key = entry.key;
-      final String? localPath = _keyToLocalImagePath(key);
+      final String? localPath = await _keyToLocalAssetPath(key);
       if (localPath == null) {
         continue;
       }
@@ -864,6 +867,16 @@ class SyncService extends GetxController {
     await _collectImageIndex(
       rootDir: ImageUtil.getCoverImageRootDirPath(),
       prefix: 'cover',
+      index: index,
+    );
+    await _collectImageIndex(
+      rootDir: await JournalMarkdownUtil.getMarkdownRootDirPath(),
+      prefix: 'journal_md',
+      index: index,
+    );
+    await _collectImageIndex(
+      rootDir: await NoteMarkdownUtil.getMarkdownRootDirPath(),
+      prefix: 'note_md',
       index: index,
     );
     return index;
@@ -957,7 +970,7 @@ class SyncService extends GetxController {
     );
   }
 
-  String? _keyToLocalImagePath(String key) {
+  Future<String?> _keyToLocalAssetPath(String key) async {
     if (key.startsWith('note/')) {
       final rel = key.substring('note/'.length);
       return "${ImageUtil.getNoteImageRootDirPath()}$rel";
@@ -969,6 +982,16 @@ class SyncService extends GetxController {
     if (key.startsWith('cover/')) {
       final rel = key.substring('cover/'.length);
       return "${ImageUtil.getCoverImageRootDirPath()}$rel";
+    }
+    if (key.startsWith('journal_md/')) {
+      final rel = key.substring('journal_md/'.length);
+      final root = await JournalMarkdownUtil.getMarkdownRootDirPath();
+      return p.join(root, rel);
+    }
+    if (key.startsWith('note_md/')) {
+      final rel = key.substring('note_md/'.length);
+      final root = await NoteMarkdownUtil.getMarkdownRootDirPath();
+      return p.join(root, rel);
     }
     return null;
   }
