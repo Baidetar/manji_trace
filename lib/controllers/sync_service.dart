@@ -209,6 +209,7 @@ class SyncService extends GetxController {
 
       final int localDbModifiedTime = await _getLocalDbModifiedTime();
       final int localRecordCount = await _getTotalRecordCount();
+      final int localChangeLogId = await SyncChangeLogUtil.getLatestChangeId();
       final Map<String, Map<String, dynamic>> localImageIndex =
           await _buildLocalImageIndex();
       final String localImageIndexDigest =
@@ -217,6 +218,7 @@ class SyncService extends GetxController {
       final bool localChanged = _hasMeaningfulLocalChange(
         localDbModifiedTime: localDbModifiedTime,
         localRecordCount: localRecordCount,
+        localChangeLogId: localChangeLogId,
         localImageIndexDigest: localImageIndexDigest,
       );
       final bool crossDevice = remoteModel.deviceId != Global.deviceId;
@@ -608,9 +610,10 @@ class SyncService extends GetxController {
   bool _hasMeaningfulLocalChange({
     required int localDbModifiedTime,
     required int localRecordCount,
+    required int localChangeLogId,
     required String localImageIndexDigest,
   }) {
-    final bool localDbChanged = localDbModifiedTime > lastLocalSyncTime;
+    final bool localDbChanged = localChangeLogId > lastSyncedChangeLogId;
     final bool localImageChanged =
         localImageIndexDigest != lastLocalImageIndexDigest;
     // 首次启动且本地无数据时，不将初始化数据库时间视作“本地有改动”。
@@ -698,8 +701,7 @@ class SyncService extends GetxController {
       final Map<String, dynamic>? remoteMeta = remoteIndex[key];
 
       final bool needUpload = remoteMeta == null ||
-          remoteMeta['size'] != localMeta['size'] ||
-          remoteMeta['mtime'] != localMeta['mtime'];
+          !_imageMetaMatches(localMeta, remoteMeta);
       if (!needUpload) {
         continue;
       }
@@ -767,14 +769,22 @@ class SyncService extends GetxController {
 
       final localFile = File(localPath);
       if (await localFile.exists()) {
-        final localStat = await localFile.stat();
-        final int remoteSize = (entry.value['size'] as num?)?.toInt() ?? -1;
-        final int remoteMtime = (entry.value['mtime'] as num?)?.toInt() ?? -1;
-        final bool sameSize = remoteSize >= 0 && localStat.size == remoteSize;
-        final bool sameMtime = remoteMtime >= 0 &&
-            localStat.modified.millisecondsSinceEpoch == remoteMtime;
-        if (sameSize && sameMtime) {
-          continue;
+        final String remoteDigest = entry.value['digest']?.toString() ?? '';
+        if (remoteDigest.isNotEmpty) {
+          final String localDigest = await _hashFile(localFile);
+          if (localDigest == remoteDigest) {
+            continue;
+          }
+        } else {
+          final localStat = await localFile.stat();
+          final int remoteSize = (entry.value['size'] as num?)?.toInt() ?? -1;
+          final int remoteMtime = (entry.value['mtime'] as num?)?.toInt() ?? -1;
+          final bool sameSize = remoteSize >= 0 && localStat.size == remoteSize;
+          final bool sameMtime = remoteMtime >= 0 &&
+              localStat.modified.millisecondsSinceEpoch == remoteMtime;
+          if (sameSize && sameMtime) {
+            continue;
+          }
         }
       }
 
@@ -831,6 +841,7 @@ class SyncService extends GetxController {
       index[key] = {
         'size': stat.size,
         'mtime': stat.modified.millisecondsSinceEpoch,
+        'digest': await _hashFile(entity),
         'localPath': entity.path,
       };
     }
@@ -844,9 +855,7 @@ class SyncService extends GetxController {
       final item = index[key] ?? const <String, dynamic>{};
       sb.write(key);
       sb.write('|');
-      sb.write(item['size'] ?? 0);
-      sb.write('|');
-      sb.write(item['mtime'] ?? 0);
+      sb.write(item['digest'] ?? '');
       sb.write(';');
     }
     return sha256.convert(utf8.encode(sb.toString())).toString();
@@ -887,6 +896,7 @@ class SyncService extends GetxController {
       sanitized[entry.key] = {
         'size': entry.value['size'] ?? 0,
         'mtime': entry.value['mtime'] ?? 0,
+        'digest': entry.value['digest'] ?? '',
       };
     }
     await _withRetry(
@@ -928,6 +938,33 @@ class SyncService extends GetxController {
         // 目录已存在时忽略
       }
     }
+  }
+
+  Future<String> _hashFile(File file) async {
+    final List<int> bytes = await file.readAsBytes();
+    return sha256.convert(Uint8List.fromList(bytes)).toString();
+  }
+
+  bool _imageMetaMatches(
+    Map<String, dynamic> localMeta,
+    Map<String, dynamic> remoteMeta,
+  ) {
+    final String localDigest = localMeta['digest']?.toString() ?? '';
+    final String remoteDigest = remoteMeta['digest']?.toString() ?? '';
+    if (localDigest.isNotEmpty && remoteDigest.isNotEmpty) {
+      return localDigest == remoteDigest;
+    }
+
+    final int localSize = (localMeta['size'] as num?)?.toInt() ?? -1;
+    final int remoteSize = (remoteMeta['size'] as num?)?.toInt() ?? -1;
+    final int localMtime = (localMeta['mtime'] as num?)?.toInt() ?? -1;
+    final int remoteMtime = (remoteMeta['mtime'] as num?)?.toInt() ?? -1;
+    return localSize >= 0 &&
+        remoteSize >= 0 &&
+        localSize == remoteSize &&
+        localMtime >= 0 &&
+        remoteMtime >= 0 &&
+        localMtime == remoteMtime;
   }
 
   String _dirname(String fullPath) {

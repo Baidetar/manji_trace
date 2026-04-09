@@ -61,10 +61,11 @@ class _WindowWrapperState extends State<WindowWrapper>
     windowManager.addListener(this);
     _init();
 
-    // 还原最新备份、开启间隔备份
-    BackupService.to.startService();
-    // 启动自动同步检查
-    SyncService.to.checkAndSyncOnStart();
+    // 先完成备份初始化，再执行同步检查，避免两者并发抢占本地状态。
+    () async {
+      await BackupService.to.startService();
+      await SyncService.to.checkAndSyncOnStart();
+    }();
   }
 
   @override

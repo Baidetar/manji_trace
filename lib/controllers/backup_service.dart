@@ -13,6 +13,7 @@ import 'package:manji_trace/utils/toast_util.dart';
 import 'package:manji_trace/utils/webdav_util.dart';
 import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
+import 'package:file_picker/file_picker.dart';
 
 enum BackupMode {
   close("关闭", 0),
@@ -98,17 +99,21 @@ class BackupService extends GetxController {
       );
 
       _setBackupProgress(0.92, '请在系统窗口选择保存位置');
-      await FileSaver.instance.saveAs(
-        name: zipName,
-        ext: '',
-        bytes: tempZipFile.readAsBytesSync(),
-        mimeType: MimeType.zip,
+      final String? savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: '保存备份文件',
+        fileName: zipName,
+        type: FileType.custom,
+        allowedExtensions: const ['zip'],
+        bytes: await tempZipFile.readAsBytes(),
       );
+      if (savedPath == null || savedPath.isEmpty) {
+        throw '已取消保存';
+      }
       tempZipFile.delete();
       _setBackupProgress(1.0, '导出完成');
       ToastUtil.showText('本地导出成功');
-    } catch (e) {
-      AppLog.error('导出本地备份失败: $e');
+    } catch (e, st) {
+      AppLog.error('导出本地备份失败: $e\n$st');
       ToastUtil.showError('导出失败: $e');
     } finally {
       await Future.delayed(const Duration(milliseconds: 350));
@@ -139,7 +144,7 @@ class BackupService extends GetxController {
     // 如果开启了本地备份
     if (SPUtil.getBool("auto_backup_local")) {
       AppLog.info("准备本地自动备份");
-      runBackupWithProgress(
+      await runBackupWithProgress(
         localBackupDirPath:
             SPUtil.getString("backup_local_dir", defaultValue: "unset"),
         showToastFlag: false,
@@ -165,7 +170,7 @@ class BackupService extends GetxController {
     // 如果设置为打开时备份
     if (curRemoteBackupModeName == BackupMode.backupAfterOpenApp.name) {
       AppLog.info("准备dav自动备份");
-      runBackupWithProgress(
+      await runBackupWithProgress(
         remoteBackupDirPath: await WebDavUtil.getRemoteBackupDirPath(),
         showToastFlag: false,
         automatic: true,
@@ -174,7 +179,7 @@ class BackupService extends GetxController {
     }
     // 如果设置为打开时还原远程最新数据
     else if (enableAutoRestoreFromRemote) {
-      tryRestoreRemoteFile();
+      await tryRestoreRemoteFile();
     }
   }
 

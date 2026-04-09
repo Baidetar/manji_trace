@@ -81,7 +81,9 @@ Future<String?> _copyImageToPrivateDir(String sourcePath, {required bool isNoteI
     AppLog.info("图片已复制到私有目录：$targetPath");
 
     // 返回相对路径（用于存储到数据库）
-    final relativePath = ImageUtil.getRelativeNoteImagePath(targetPath);
+    final relativePath = isNoteImage
+        ? ImageUtil.getRelativeNoteImagePath(targetPath)
+        : ImageUtil.getRelativeCoverImagePath(targetPath);
     return relativePath;
   } catch (e) {
     AppLog.error("复制图片到私有目录失败：$e");
