@@ -39,7 +39,8 @@ class SqliteUtil {
   static const sqlFileName = 'mydb.db';
   static late Database database;
   static late String dbPath;
-  static const dbVersion = 1;
+  static const dbVersion = 2;
+  static const String _schemaMigrationTable = 'app_schema_migration';
 
   static Future<bool> ensureDBTable() async {
     await ImageUtil.getInstance();
@@ -92,6 +93,9 @@ class SqliteUtil {
     await SeriesDao.createTable();
     await AnimeSeriesDao.createTable();
 
+    // 创建核心查询索引，优化日记/笔记/图片/历史等常用查询性能。
+    await SqliteUtil.ensurePerformanceIndexes();
+
     // 创建增量同步变更日志基础设施（表+触发器）
     await SyncChangeLogUtil.ensureChangeLogInfra();
 
@@ -128,6 +132,7 @@ class SqliteUtil {
       return await openDatabase(
         dbPath,
         onCreate: _createDb,
+        onUpgrade: _onUpgrade,
         version: dbVersion,
       );
     } else if (Platform.isWindows) {
@@ -135,6 +140,7 @@ class SqliteUtil {
         dbPath,
         options: OpenDatabaseOptions(
           onCreate: _createDb,
+          onUpgrade: _onUpgrade,
           version: dbVersion,
         ),
       );
@@ -187,6 +193,46 @@ class SqliteUtil {
   static FutureOr<void> _createDb(Database db, int version) async {
     await _createInitTable(db);
     await _insertInitData(db);
+    await _runSchemaMigrations(db, oldVersion: 0, newVersion: version);
+  }
+
+  static FutureOr<void> _onUpgrade(
+      Database db, int oldVersion, int newVersion) async {
+    AppLog.info('数据库结构升级: v$oldVersion -> v$newVersion');
+    await _runSchemaMigrations(
+      db,
+      oldVersion: oldVersion,
+      newVersion: newVersion,
+    );
+  }
+
+  static Future<void> _runSchemaMigrations(
+    Database db, {
+    required int oldVersion,
+    required int newVersion,
+  }) async {
+    if (oldVersion < 2 && newVersion >= 2) {
+      await _migrateToV2(db);
+    }
+  }
+
+  static Future<void> _migrateToV2(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $_schemaMigrationTable (
+        version INTEGER PRIMARY KEY,
+        applied_at TEXT NOT NULL,
+        note TEXT
+      )
+    ''');
+    await db.insert(
+      _schemaMigrationTable,
+      {
+        'version': 2,
+        'applied_at': DateTime.now().toIso8601String(),
+        'note': 'introduce explicit migration framework',
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
   }
 
   static Future<void> _createInitTable(Database db) async {
@@ -427,6 +473,39 @@ class SqliteUtil {
           REFERENCES anime (anime_id)
       );
       ''');
+  }
+
+  static Future<void> ensurePerformanceIndexes() async {
+    final List<String> sqls = [
+      '''
+      CREATE INDEX IF NOT EXISTS idx_episode_note_anime_episode_review
+      ON episode_note(anime_id, episode_number, review_number)
+      ''',
+      '''
+      CREATE INDEX IF NOT EXISTS idx_episode_note_update_time
+      ON episode_note(update_time DESC)
+      ''',
+      '''
+      CREATE INDEX IF NOT EXISTS idx_image_note_type_note_id_order
+      ON image(note_type, note_id, order_idx)
+      ''',
+      '''
+      CREATE INDEX IF NOT EXISTS idx_journal_note_create_update
+      ON journal_note(create_time DESC, update_time DESC)
+      ''',
+      '''
+      CREATE INDEX IF NOT EXISTS idx_history_anime_review_episode
+      ON history(anime_id, review_number, episode_number)
+      ''',
+    ];
+
+    for (final sql in sqls) {
+      try {
+        await database.execute(sql);
+      } catch (e) {
+        AppLog.warn('创建性能索引失败: $e');
+      }
+    }
   }
 
   static Future<void> addColumnOrderIdxToImage() async {

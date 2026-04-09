@@ -104,6 +104,11 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
                   syncService.lastDeltaFallbackTime)
               .toString()
               .substring(0, 19);
+        String deltaSkippedTimeStr = syncService.lastDeltaSkippedTime == 0
+          ? "-"
+          : DateTime.fromMillisecondsSinceEpoch(syncService.lastDeltaSkippedTime)
+            .toString()
+            .substring(0, 19);
 
       return SettingCard(
         title: '多设备同步 (WebDAV)',
@@ -195,6 +200,16 @@ class _BackupAndRestorePageState extends State<BackupAndRestorePage> {
               subtitle: Text(
                 "时间: $deltaFallbackTimeStr\n"
                 "原因: ${_formatDeltaFallbackReason(syncService.lastDeltaFallbackReason)}",
+              ),
+            ),
+          if (syncService.lastDeltaSkippedTotal > 0)
+            ListTile(
+              title: const Text("最近一次增量跳过统计"),
+              subtitle: Text(
+                "时间: $deltaSkippedTimeStr\n"
+                "总跳过: ${syncService.lastDeltaSkippedTotal}\n"
+                "本地较新(跳过覆盖): ${syncService.lastDeltaSkippedByLocalNewer}\n"
+                "已删除保护(墓碑): ${syncService.lastDeltaSkippedByTombstone}",
               ),
             ),
           ListTile(

@@ -17,9 +17,11 @@ import 'package:manji_trace/utils/sqlite_util.dart';
 import 'package:manji_trace/utils/sqlite_sync_util.dart';
 import 'package:manji_trace/utils/webdav_util.dart';
 import 'package:manji_trace/utils/image_util.dart';
+import 'package:manji_trace/utils/journal_markdown_util.dart';
 import 'package:manji_trace/values/values.dart';
 import 'package:get/get.dart';
 import 'package:manji_trace/utils/toast_util.dart';
+import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:manji_trace/utils/log.dart';
 import 'package:webdav_client/webdav_client.dart' as dav_client;
@@ -68,6 +70,8 @@ class BackupUtil {
     String noteImageDir = ImageUtil.getNoteImageRootDirPath();
     String journalImageDir = ImageUtil.getJournalImageRootDirPath();
     String coverImageDir = ImageUtil.getCoverImageRootDirPath();
+    final String markdownDir =
+        await JournalMarkdownUtil.getMarkdownRootDirPath();
     final String checklistDesc = ChecklistController.to.desc;
     final int historyCount = await HistoryDao.getCount();
 
@@ -81,6 +85,7 @@ class BackupUtil {
           noteImageDir: noteImageDir,
           journalImageDir: journalImageDir,
           coverImageDir: coverImageDir,
+          markdownDir: markdownDir,
           checklistDesc: checklistDesc,
           historyCount: historyCount,
         );
@@ -88,6 +93,7 @@ class BackupUtil {
       AppLog.info("✓ 备份笔记图片 (${counts['note'] ?? 0} 个文件)");
       AppLog.info("✓ 备份日记图片 (${counts['journal'] ?? 0} 个文件)");
       AppLog.info("✓ 备份封面图片 (${counts['cover'] ?? 0} 个文件)");
+      AppLog.info("✓ 备份日记Markdown (${counts['markdown'] ?? 0} 个文件)");
       _reportProgress(onProgress, 1.0, "备份包生成完成");
       return File(tempZipFilePath);
     }
@@ -158,6 +164,25 @@ class BackupUtil {
     }
     _reportProgress(onProgress, 0.75, "已处理封面图片");
 
+    // 3.5 添加日记Markdown文件
+    int markdownCount = 0;
+    final List<File> markdownFiles = await _listFilesRecursively(markdownDir);
+    if (markdownFiles.isNotEmpty) {
+      markdownCount = markdownFiles.length;
+      await _addFilesToZip(
+        encoder,
+        rootDir: markdownDir,
+        files: markdownFiles,
+        zipDirPrefix: "notes/journal/",
+        onProgress: onProgress,
+        progressStart: 0.76,
+        progressEnd: 0.88,
+        progressText: "正在打包日记Markdown",
+      );
+      AppLog.info("✓ 备份日记Markdown ($markdownCount 个文件)");
+    }
+    _reportProgress(onProgress, 0.88, "已处理日记Markdown");
+
     // 4. 添加描述信息
     File descFile = File("$dirPath/desc");
     String desc = "";
@@ -165,7 +190,8 @@ class BackupUtil {
     desc += "历史：$historyCount条记录\n";
     desc += "笔记图片数：$noteImageCount\n";
     desc += "日记图片数：$journalImageCount\n";
-    desc += "封面图片数：$coverImageCount";
+    desc += "封面图片数：$coverImageCount\n";
+    desc += "日记Markdown数：$markdownCount";
     descFile.writeAsStringSync(desc);
     await encoder.addFile(descFile);
     AppLog.info("✓ 备份描述信息");
@@ -182,6 +208,7 @@ class BackupUtil {
     required String noteImageDir,
     required String journalImageDir,
     required String coverImageDir,
+    required String markdownDir,
     required String checklistDesc,
     required int historyCount,
   }) {
@@ -195,6 +222,8 @@ class BackupUtil {
         encoder, journalImageDir, "images/journal_images/");
     final int coverCount =
         _addDirectoryToZipSync(encoder, coverImageDir, "images/cover_images/");
+    final int markdownCount =
+        _addDirectoryToZipSync(encoder, markdownDir, "notes/journal/");
 
     final String dirPath = File(tempZipFilePath).parent.path;
     final File descFile = File("$dirPath/desc");
@@ -202,7 +231,8 @@ class BackupUtil {
         "历史：$historyCount条记录\n"
         "笔记图片数：$noteCount\n"
         "日记图片数：$journalCount\n"
-        "封面图片数：$coverCount";
+        "封面图片数：$coverCount\n"
+        "日记Markdown数：$markdownCount";
     descFile.writeAsStringSync(desc);
     encoder.addFile(descFile);
     encoder.closeSync();
@@ -211,6 +241,7 @@ class BackupUtil {
       'note': noteCount,
       'journal': journalCount,
       'cover': coverCount,
+      'markdown': markdownCount,
     };
   }
 
@@ -306,6 +337,7 @@ class BackupUtil {
     String noteImageDir = ImageUtil.getNoteImageRootDirPath();
     String journalImageDir = ImageUtil.getJournalImageRootDirPath();
     String coverImageDir = ImageUtil.getCoverImageRootDirPath();
+    String markdownDir = await JournalMarkdownUtil.getMarkdownRootDirPath();
 
     int noteCount = Directory(noteImageDir).existsSync()
         ? Directory(noteImageDir)
@@ -325,6 +357,12 @@ class BackupUtil {
             .whereType<File>()
             .length
         : 0;
+    int markdownCount = Directory(markdownDir).existsSync()
+        ? Directory(markdownDir)
+            .listSync(recursive: true)
+            .whereType<File>()
+            .length
+        : 0;
 
     return {
       'recordCount':
@@ -333,6 +371,7 @@ class BackupUtil {
       'noteImageCount': noteCount,
       'journalImageCount': journalCount,
       'coverImageCount': coverCount,
+      'journalMarkdownCount': markdownCount,
     };
   }
 
@@ -559,7 +598,7 @@ class BackupUtil {
         time = time.replaceAll(" ", "-");
         String recordFileName = "record-$time.zip";
         var recordFile = await BackupUtil.createTempBackUpFile(recordFileName);
-        File rbrFile = await recordFile.rename("$dirPath/$recordFileName");
+        File rbrFile = await recordFile.rename(p.join(dirPath, recordFileName));
         AppLog.info("✓ 还原前备份已创建: ${rbrFile.path}");
 
         // 清理超出限制的旧RBR文件
@@ -603,7 +642,9 @@ class BackupUtil {
         await SqliteUtil.ensureDBTable();
         // 还原后清理“有记录但文件不存在”的图片，避免显示损坏占位图。
         await SqliteUtil.cleanupMissingImageRows();
-        if (delete) File(localBackupFilePath).delete();
+        if (delete) {
+          await File(localBackupFilePath).delete();
+        }
         restoreOk = true;
       } catch (e) {
         AppLog.error("解压并还原失败: $e");
@@ -641,7 +682,7 @@ class BackupUtil {
       return Result.failure(404, "空文件路径，无法还原");
     }
     AppLog.info("开始从WebDav还原: ${file.path}");
-    String localBackupFilePath = "$localRootDirPath/${file.name}";
+    String localBackupFilePath = p.join(localRootDirPath, file.name);
 
     try {
       await WebDavUtil.client
@@ -668,6 +709,7 @@ class BackupUtil {
     String noteImageDir = ImageUtil.getNoteImageRootDirPath();
     String journalImageDir = ImageUtil.getJournalImageRootDirPath();
     String coverImageDir = ImageUtil.getCoverImageRootDirPath();
+    String markdownDir = await JournalMarkdownUtil.getMarkdownRootDirPath();
 
     // Read the Zip file from disk.
     final bytes = File(localZipPath).readAsBytesSync();
@@ -695,7 +737,7 @@ class BackupUtil {
           if (idx < 0) return null;
           final String relativePath =
               normalizedName.substring(idx + prefix.length);
-          return baseDir + relativePath;
+          return p.join(baseDir, relativePath);
         }
 
         // 根据文件类型确定实际保存路径
@@ -708,6 +750,8 @@ class BackupUtil {
         final coverPath =
             extractLegacyImagePath('images/cover_images/', coverImageDir) ??
                 extractLegacyImagePath('cover_images/', coverImageDir);
+        final markdownPath =
+            extractLegacyImagePath('notes/journal/', markdownDir);
 
         if (notePath != null) {
           actualFilePath = notePath;
@@ -715,12 +759,14 @@ class BackupUtil {
           actualFilePath = journalPath;
         } else if (coverPath != null) {
           actualFilePath = coverPath;
+        } else if (markdownPath != null) {
+          actualFilePath = markdownPath;
         } else if (normalizedName.endsWith('.db')) {
           // 兼容旧版备份中数据库文件名不是固定 mydb.db 的情况
           actualFilePath = SqliteUtil.dbPath;
         } else {
           // 其他文件（如数据库、描述）放在根目录
-          actualFilePath = "$localRootDirPath/$filename";
+          actualFilePath = p.join(localRootDirPath, filename);
         }
 
         // 检查是否已存在，如果是图片且已存在，根据overwriteImages决定
@@ -761,7 +807,7 @@ class BackupUtil {
           if (idx < 0) return null;
           final String relativePath =
               normalizedName.substring(idx + prefix.length);
-          return baseDir + relativePath;
+          return p.join(baseDir, relativePath);
         }
 
         final noteDirPath =
@@ -773,6 +819,8 @@ class BackupUtil {
         final coverDirPath =
             extractLegacyDirPath('images/cover_images/', coverImageDir) ??
                 extractLegacyDirPath('cover_images/', coverImageDir);
+        final markdownDirPath =
+            extractLegacyDirPath('notes/journal/', markdownDir);
 
         if (noteDirPath != null) {
           dirPath = Directory(noteDirPath);
@@ -780,8 +828,10 @@ class BackupUtil {
           dirPath = Directory(journalDirPath);
         } else if (coverDirPath != null) {
           dirPath = Directory(coverDirPath);
+        } else if (markdownDirPath != null) {
+          dirPath = Directory(markdownDirPath);
         } else {
-          dirPath = Directory("$localRootDirPath/$filename");
+          dirPath = Directory(p.join(localRootDirPath, filename));
         }
 
         if (!dirPath.existsSync()) {
@@ -908,8 +958,10 @@ class BackupUtil {
 
   /// 获取还原时备份当前数据所应存放的目录路径
   static Future<String> getRBRPath() async {
-    String dirPath =
-        "${(await getApplicationSupportDirectory()).path}/backup_before_restore";
+    String dirPath = p.join(
+      (await getApplicationSupportDirectory()).path,
+      'backup_before_restore',
+    );
     Directory(dirPath).createSync();
     return dirPath;
   }

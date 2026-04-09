@@ -1,7 +1,7 @@
 name: manji_trace
 description: 漫迹
 publish_to: "none"
-version: 1.16.0+3
+version: 1.16.0+5
 environment:
   sdk: ">=3.3.4 <4.0.0"
 

@@ -32,6 +32,7 @@ class SyncService extends GetxController {
   final String deltaManifestFileName = "sync_delta_manifest.json";
   final String deltaManifestDirName = "sync_delta_chain";
   final int maxDeltaChainFilesKeep = 120;
+  final int tombstoneRetentionDays = 120;
   final String imageRemoteRootDir = "sync_images";
   Timer? _autoSyncTimer;
   int _lastAutoSyncAttemptMs = 0;
@@ -83,10 +84,35 @@ class SyncService extends GetxController {
   set lastDeltaFallbackTime(int val) =>
       SPUtil.setInt("last_delta_fallback_time", val);
 
+    int get lastDeltaSkippedTotal =>
+      SPUtil.getInt("last_delta_skipped_total", defaultValue: 0);
+    set lastDeltaSkippedTotal(int val) =>
+      SPUtil.setInt("last_delta_skipped_total", val);
+
+    int get lastDeltaSkippedByLocalNewer =>
+      SPUtil.getInt("last_delta_skipped_local_newer", defaultValue: 0);
+    set lastDeltaSkippedByLocalNewer(int val) =>
+      SPUtil.setInt("last_delta_skipped_local_newer", val);
+
+    int get lastDeltaSkippedByTombstone =>
+      SPUtil.getInt("last_delta_skipped_tombstone", defaultValue: 0);
+    set lastDeltaSkippedByTombstone(int val) =>
+      SPUtil.setInt("last_delta_skipped_tombstone", val);
+
+    int get lastDeltaSkippedTime =>
+      SPUtil.getInt("last_delta_skipped_time", defaultValue: 0);
+    set lastDeltaSkippedTime(int val) =>
+      SPUtil.setInt("last_delta_skipped_time", val);
+
   bool get needDeltaChainRebase =>
       SPUtil.getBool("need_delta_chain_rebase", defaultValue: false);
   set needDeltaChainRebase(bool val) =>
       SPUtil.setBool("need_delta_chain_rebase", val);
+
+    int get lastTombstonePruneTime =>
+      SPUtil.getInt("last_tombstone_prune_time", defaultValue: 0);
+    set lastTombstonePruneTime(int val) =>
+      SPUtil.setInt("last_tombstone_prune_time", val);
 
   /// 启动时检查同步
   Future<void> checkAndSyncOnStart() async {
@@ -180,6 +206,7 @@ class SyncService extends GetxController {
     update();
 
     try {
+      await _tryPruneTombstones();
       final String writeRemoteDir = await WebDavUtil.getRemoteSyncDirPath();
       if (writeRemoteDir.isEmpty) return;
       _setSyncProgress(0.08, '已连接同步目录');
@@ -497,16 +524,37 @@ class SyncService extends GetxController {
           if (chain.isNotEmpty) {
             try {
               int appliedTotal = 0;
+              int skippedTotal = 0;
+              int skippedByLocalNewerTotal = 0;
+              int skippedByTombstoneTotal = 0;
               bool deltaOk = true;
               for (final manifest in chain) {
                 final deltaApply =
                     await SyncChangeLogUtil.applyDeltaManifest(manifest);
-                if (deltaApply['ok'] == true) {
-                  appliedTotal += (deltaApply['appliedCount'] as int?) ?? 0;
+                if (deltaApply.ok) {
+                  appliedTotal += deltaApply.appliedCount;
+                  skippedTotal += deltaApply.skippedCount;
+                  skippedByLocalNewerTotal += deltaApply.skippedByLocalNewer;
+                  skippedByTombstoneTotal += deltaApply.skippedByTombstone;
                 } else {
                   deltaOk = false;
                   break;
                 }
+              }
+
+              if (skippedTotal > 0) {
+                lastDeltaSkippedTotal = skippedTotal;
+                lastDeltaSkippedByLocalNewer = skippedByLocalNewerTotal;
+                lastDeltaSkippedByTombstone = skippedByTombstoneTotal;
+                lastDeltaSkippedTime = DateTime.now().millisecondsSinceEpoch;
+                AppLog.info(
+                  '增量回放跳过详情: total=$skippedTotal, localNewer=$skippedByLocalNewerTotal, tombstone=$skippedByTombstoneTotal',
+                );
+              } else {
+                lastDeltaSkippedTotal = 0;
+                lastDeltaSkippedByLocalNewer = 0;
+                lastDeltaSkippedByTombstone = 0;
+                lastDeltaSkippedTime = 0;
               }
 
               if (deltaOk &&
@@ -516,7 +564,9 @@ class SyncService extends GetxController {
                 if (curDigest == remoteModel.payloadDigest) {
                   result = Result.success(
                     true,
-                    msg: '已通过增量链快速同步数据库($appliedTotal条变更)',
+                    msg: skippedTotal > 0
+                      ? '增量同步完成(应用:$appliedTotal, 跳过:$skippedTotal, 本地较新:$skippedByLocalNewerTotal, 已删除保护:$skippedByTombstoneTotal)'
+                        : '已通过增量链快速同步数据库($appliedTotal条变更)',
                   );
                 } else {
                   deltaFallbackReason = 'delta-digest-mismatch';
@@ -526,7 +576,9 @@ class SyncService extends GetxController {
               } else if (deltaOk) {
                 result = Result.success(
                   true,
-                  msg: '已通过增量链同步数据库($appliedTotal条变更)',
+                  msg: skippedTotal > 0
+                      ? '增量同步完成(应用:$appliedTotal, 跳过:$skippedTotal, 本地较新:$skippedByLocalNewerTotal, 已删除保护:$skippedByTombstoneTotal)'
+                      : '已通过增量链同步数据库($appliedTotal条变更)',
                 );
               } else {
                 deltaFallbackReason = 'delta-apply-failed';
@@ -1132,6 +1184,25 @@ class SyncService extends GetxController {
 
   bool _shouldMarkDeltaChainRebase(String reason) {
     return shouldMarkDeltaChainRebaseReason(reason);
+  }
+
+  Future<void> _tryPruneTombstones() async {
+    final int now = DateTime.now().millisecondsSinceEpoch;
+    const int minIntervalMs = 24 * 60 * 60 * 1000;
+    if (now - lastTombstonePruneTime < minIntervalMs) {
+      return;
+    }
+    try {
+      final int removed = await SyncChangeLogUtil.pruneTombstones(
+        retentionDays: tombstoneRetentionDays,
+      );
+      lastTombstonePruneTime = now;
+      if (removed > 0) {
+        AppLog.info('已清理过期删除墓碑: $removed');
+      }
+    } catch (e) {
+      AppLog.warn('清理过期删除墓碑失败: $e');
+    }
   }
 
   Future<void> _purgeRemoteDeltaChain(String chainDir) async {
