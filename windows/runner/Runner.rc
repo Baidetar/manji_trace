@@ -92,10 +92,10 @@ BEGIN
             VALUE "CompanyName", "com.example" "\0"
             VALUE "FileDescription", "漫迹" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "anime_footmark_windows" "\0"
+            VALUE "InternalName", "manji_trace_windows" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2022 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "anime_footmark_windows.exe" "\0"
-            VALUE "ProductName", "anime_footmark_windows" "\0"
+            VALUE "OriginalFilename", "manji_trace_windows.exe" "\0"
+            VALUE "ProductName", "manji_trace_windows" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
